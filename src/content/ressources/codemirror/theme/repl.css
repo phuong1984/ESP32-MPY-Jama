@@ -1,6 +1,26 @@
-
-.cm-s-repl.CodeMirror, .cm-s-repl {
-  background-color: #19242F !important;
-  color: white !important;
+.cm-s-repl.CodeMirror,
+.cm-s-repl {
+  background-color: #272822 !important;
+  color: #F8F8F2 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
   border: none;
+}
+
+.cm-s-repl .CodeMirror-cursor {
+  border-left: 2px solid #F8F8F0 !important;
+}
+
+.cm-s-repl .CodeMirror-activeline-background {
+  background: #3E3D32 !important;
+}
+
+/* Terminal prompt styling if applicable */
+.cm-s-repl span.cm-comment {
+  color: #75715E;
+}
+
+.cm-s-repl span.cm-keyword {
+  color: #66D9EF;
 }

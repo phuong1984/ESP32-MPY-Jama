@@ -6,80 +6,78 @@
 #                                               #
 # =============================================*/
 
-const GITHUB_REPOSITORY_URL   = "https://github.com/jczic/ESP32-MPY-Jama";
+const GITHUB_REPOSITORY_URL = "https://github.com/jczic/ESP32-MPY-Jama";
 const GITHUB_LAST_RELEASE_URL = "https://api.github.com/repos/jczic/ESP32-MPY-Jama/releases/latest";
 
-const PRC_NONE                = 0;
-const PRC_TRANSFER            = 1;
-const PRC_EXEC_CODE           = 2;
-const PRC_EXEC_JAMA           = 3;
+const PRC_NONE = 0;
+const PRC_TRANSFER = 1;
+const PRC_EXEC_CODE = 2;
+const PRC_EXEC_JAMA = 3;
 
-var websocket                 = null;
-var wsConnected               = false;
-var toastTimeout              = null;
-var boxDialogFunc             = null;
+var websocket = null;
+var wsConnected = false;
+var toastTimeout = null;
+var boxDialogFunc = null;
 var boxDialogGenericParentElm = null;
-var canCloseWindow            = true;
+var canCloseWindow = true;
 
-var appTitle                  = "";
-var appVer                    = "";
-var osName                    = "";
+var appTitle = "";
+var appVer = "";
+var osName = "";
 
-var currentPort               = null;
-var connectionState           = false;
-var processing                = PRC_NONE;
+var currentPort = null;
+var connectionState = false;
+var processing = PRC_NONE;
 
-var showConnPortsDialog       = false;
-var showNetworksInfoPage      = false;
+var showConnPortsDialog = false;
+var showNetworksInfoPage = false;
 
-var pinsList                  = { }
-var networkMiniInfos          = null
+var pinsList = {}
+var networkMiniInfos = null
 
-var keepConfig                = { };
+var keepConfig = {};
 
-var flashRootPath             = "";
-var browsePath                = "";
-var sdcardMountPoint          = null;
+var flashRootPath = "";
+var browsePath = "";
+var sdcardMountPoint = null;
 
-var codeMirrorTerm            = null;
-var codeMirrorJamaTerm        = null;
-var termTextBuffer            = '';
-var termLastWriteMS           = 0;
+var codeMirrorTerm = null;
+var codeMirrorJamaTerm = null;
+var termTextBuffer = '';
+var termLastWriteMS = 0;
 
-var cmdHistory                = [ ];
-var cmdHistoryNav             = [""];
-var cmdHistoryIdx             = 0;
+var cmdHistory = [];
+var cmdHistoryNav = [""];
+var cmdHistoryIdx = 0;
 
-var counterNewFile            = 1;
+var counterNewFile = 1;
 
-var contentBytesArr           = [ ];
-var contentRemotePath         = "";
+var contentBytesArr = [];
+var contentRemotePath = "";
 
-var keepTabCodeElm            = null;
-var keepCloseTabCodeElm       = false;
+var keepTabCodeElm = null;
+var keepCloseTabCodeElm = false;
 
-var execAnimShowTime          = null;
+var execAnimShowTime = null;
 
-var execJamaFuncConfig        = null;
-var execJamaStopTimeout       = null;
+var execJamaFuncConfig = null;
+var execJamaStopTimeout = null;
 
-var pinoutModels              = [ "ESP32-C6-DevKitC-1 (C6-WROOM-1)",
-                                  "ESP32-C3-DevKitM-1 (C3-MINI-1)",
-                                  "ESP32-C3-DevKitC-02 (C3-WROOM-02)",
-                                  "ESP32-S3-DevKitM-1 (S3-MINI-1)",
-                                  "ESP32-S3-DevKitC-1 (S3-WROOM-1)",
-                                  "ESP32-S2-DevKitM-1 (S2-MINI-1)",
-                                  "ESP32-S2-Saola-1 (S2-WROVER)",,
-                                  "ESP32-S2-DevKitC-1 (S2-SOLO)",
-                                  "ESP32-PICO-KIT (PICO-D4)",
-                                  "ESP32-DevKitM-1 (MINI-1)",
-                                  "ESP32-DevKitC (WROOM)" ];
+var pinoutModels = ["ESP32-C6-DevKitC-1 (C6-WROOM-1)",
+    "ESP32-C3-DevKitM-1 (C3-MINI-1)",
+    "ESP32-C3-DevKitC-02 (C3-WROOM-02)",
+    "ESP32-S3-DevKitM-1 (S3-MINI-1)",
+    "ESP32-S3-DevKitC-1 (S3-WROOM-1)",
+    "ESP32-S2-DevKitM-1 (S2-MINI-1)",
+    "ESP32-S2-Saola-1 (S2-WROVER)", ,
+    "ESP32-S2-DevKitC-1 (S2-SOLO)",
+    "ESP32-PICO-KIT (PICO-D4)",
+    "ESP32-DevKitM-1 (MINI-1)",
+    "ESP32-DevKitC (WROOM)"];
 
-function getElmById(id)
-{ return document.getElementById(id); }
+function getElmById(id) { return document.getElementById(id); }
 
-function getElmsByClass(className)
-{return document.getElementsByClassName(className); }
+function getElmsByClass(className) { return document.getElementsByClassName(className); }
 
 function newElm(tagName, id, classArray) {
     var elm = document.createElement(tagName);
@@ -121,27 +119,21 @@ function getEventTarget(e) {
 }
 
 function getSubElm(rootElm, classNameToFind) {
-    try        { return rootElm.getElementsByClassName(classNameToFind)[0]; }
+    try { return rootElm.getElementsByClassName(classNameToFind)[0]; }
     catch (ex) { return null; }
 }
 
-function showElm(elm)
-{ elm.style.display = 'block'; }
+function showElm(elm) { elm.style.display = 'block'; }
 
-function showElmInline(elm)
-{ elm.style.display = 'inline'; }
+function showElmInline(elm) { elm.style.display = 'inline'; }
 
-function hideElm(elm)
-{ elm.style.display = 'none'; }
+function hideElm(elm) { elm.style.display = 'none'; }
 
-function show(id)
-{ showElm(getElmById(id)); }
+function show(id) { showElm(getElmById(id)); }
 
-function showInline(id)
-{ showElmInline(getElmById(id)); }
+function showInline(id) { showElmInline(getElmById(id)); }
 
-function hide(id)
-{ hideElm(getElmById(id)); }
+function hide(id) { hideElm(getElmById(id)); }
 
 function rmElmChildren(id) {
     var elm = getElmById(id)
@@ -163,16 +155,16 @@ function toastInfo(text) {
     toastElm.innerText = text;
     document.body.appendChild(toastElm);
     toastTimeout = setTimeout(
-        function() {
+        function () {
             delElm(toastElm);
             toastTimeout = null;
         },
-        5000 );
+        5000);
 }
 
 function getUptimeStr(uptimeMin) {
-    var d = Math.floor(uptimeMin/60/24);
-    var h = Math.floor(uptimeMin/60 - d*24);
+    var d = Math.floor(uptimeMin / 60 / 24);
+    var h = Math.floor(uptimeMin / 60 - d * 24);
     var m = uptimeMin % 60;
     return d + "j, " + h + "h, " + m + "m";
 }
@@ -215,155 +207,150 @@ function getActivePage() {
     return null;
 }
 
-function onWSOpen(evt)
-{
+function onWSOpen(evt) {
     refreshJamaFuncs();
 }
 
-function onWSClose(evt)
-{
+function onWSClose(evt) {
     if (!connectWS())
         setConnectionState(false);
 }
 
-function onWSMessage(evt)
-{
+function onWSMessage(evt) {
     var o = JSON.parse(evt.data);
-    switch (o.CMD)
-    {
-        case "APP-INFO" :
+    switch (o.CMD) {
+        case "APP-INFO":
             setAppInfo(o.ARG);
             break;
-        case "SHOW-ALERT" :
+        case "SHOW-ALERT":
             toastInfo(o.ARG);
             break;
-        case "SHOW-INFO" :
+        case "SHOW-INFO":
             showInfo(o.ARG);
             break;
-        case "SHOW-ERROR" :
+        case "SHOW-ERROR":
             showError(o.ARG);
             break;
-        case "SHOW-WAIT" :
+        case "SHOW-WAIT":
             boxDialogWait(o.ARG);
             break;
-        case "HIDE-WAIT" :
+        case "HIDE-WAIT":
             boxDialogWaitClose();
             break;
-        case "SHOW-PROGRESS" :
+        case "SHOW-PROGRESS":
             boxDialogProgress(o.ARG["text"], o.ARG["percent"]);
             break;
-        case "HIDE-PROGRESS" :
+        case "HIDE-PROGRESS":
             boxDialogProgressClose();
             break;
-        case "SERIAL-PORTS" :
+        case "SERIAL-PORTS":
             setSerialPorts(o.ARG);
             break;
-        case "SERIAL-CONNECTION" :
+        case "SERIAL-CONNECTION":
             setSerialConnection(o.ARG);
             break;
-        case "EXEC-CODE-BEGIN" :
+        case "EXEC-CODE-BEGIN":
             execCodeBegin();
             break;
-        case "EXEC-CODE-RECV" :
+        case "EXEC-CODE-RECV":
             execCodeRecv(o.ARG);
             break;
-        case "EXEC-CODE-ERROR" :
+        case "EXEC-CODE-ERROR":
             execCodeError(o.ARG);
             break;
-        case "EXEC-CODE-STOPPED" :
+        case "EXEC-CODE-STOPPED":
             execCodeStopped();
             break;
-        case "EXEC-CODE-END" :
+        case "EXEC-CODE-END":
             execCodeEnd(o.ARG);
             break;
-        case "FLASH-ROOT-PATH" :
+        case "FLASH-ROOT-PATH":
             setFlashRootPath(o.ARG);
             break;
-        case "PINS-LIST" :
+        case "PINS-LIST":
             setPinsList(o.ARG);
             break;
-        case "LIST-DIR" :
+        case "LIST-DIR":
             setListDirAndFiles(o.ARG["path"], o.ARG["entries"]);
             break;
-        case "END-OF-GET-FILE-CONTENT" :
+        case "END-OF-GET-FILE-CONTENT":
             endOfGetFileContent();
             break;
-        case "FILE-CONTENT-DATA" :
+        case "FILE-CONTENT-DATA":
             recvFileContentData(o.ARG);
             break;
-        case "END-OF-FILE-CONTENT-DATA" :
+        case "END-OF-FILE-CONTENT-DATA":
             endOfFileContentData();
             break;
-        case "JAMA-FUNC-CONFIG" :
+        case "JAMA-FUNC-CONFIG":
             recvJamaFuncConfig(o.ARG);
             break;
-        case "JAMA-FUNC-IMPORTED" :
+        case "JAMA-FUNC-IMPORTED":
             recvJamaFuncImported(o.ARG);
             break;
-        case "JAMA-FUNC-DELETED" :
+        case "JAMA-FUNC-DELETED":
             recvJamaFuncDeleted(o.ARG);
             break;
-        case "DEVICE-RESET" :
+        case "DEVICE-RESET":
             deviceReset();
             break;
-        case "SYS-INFO" :
+        case "SYS-INFO":
             setSystemInfo(o.ARG);
             break;
-        case "NETWORKS-INFO" :
+        case "NETWORKS-INFO":
             setNetworksInfo(o.ARG);
             break;
-        case "NETWORKS-MIN-INFO" :
+        case "NETWORKS-MIN-INFO":
             setNetworksMinInfo(o.ARG);
             break;
-        case "AP-CLI-ADDR" :
+        case "AP-CLI-ADDR":
             showAPClientsAddr(o.ARG);
             break;
-        case "WIFI-NETWORKS" :
+        case "WIFI-NETWORKS":
             setWiFiNetworks(o.ARG);
             break;
-        case "MODULES" :
+        case "MODULES":
             importModules(o.ARG);
             break;
-        case "ESPTOOL-VER" :
+        case "ESPTOOL-VER":
             setEsptoolPage(o.ARG);
             break;
-        case "SDCARD-CONF" :
+        case "SDCARD-CONF":
             setSDCardConf(o.ARG)
             break;
-        case "MCU-SETTING-UPDATED" :
+        case "MCU-SETTING-UPDATED":
             mcuSettingUpdated();
-            break;        
-        case "WIFI-CONNECTED" :
+            break;
+        case "WIFI-CONNECTED":
             wifiConnected();
             break;
-        case "WIFI-AP-OPENED" :
+        case "WIFI-AP-OPENED":
             wifiAPOpened();
             break;
-        case "ETH-INITIALIZED" :
+        case "ETH-INITIALIZED":
             ethInitialized();
             break;
-        case "SD-CARD-MOUNTED" :
+        case "SD-CARD-MOUNTED":
             sdCardMounted();
             break;
-        case "DEVICE-INFO" :
+        case "DEVICE-INFO":
             setDeviceInfo(o.ARG);
             break;
-        case "AUTO-INFO" :
+        case "AUTO-INFO":
             setAutoInfo(o.ARG);
             break;
-        case "WANT-CLOSE-SOFTWARE" :
+        case "WANT-CLOSE-SOFTWARE":
             wantCloseSoftware();
     }
 }
 
-function onWSError(evt)
-{
+function onWSError(evt) {
     showError("Fatal internal error..!")
 }
 
 function wsSendCmd(cmdName, oArg) {
     try {
-        var o = { "CMD" : cmdName, "ARG" : oArg };
+        var o = { "CMD": cmdName, "ARG": oArg };
         websocket.send(JSON.stringify(o));
         return true;
     }
@@ -405,7 +392,7 @@ function boxDialogAlert(title, text) {
     hideExistingBoxesDialog();
     var box = getElmById("box-dialog-alert");
     getSubElm(box, "box-dialog-title").innerText = title;
-    getSubElm(box, "box-dialog-text").innerHTML  = textToHTML(text);
+    getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     getElmById("protect-layer").classList.remove("hide");
     classToggle(box, "hide", "center-container-show");
     getSubElm(box, "box-dialog-btn").focus();
@@ -415,7 +402,7 @@ function boxDialogYesNo(title, text, callbackFunc) {
     hideExistingBoxesDialog();
     var box = getElmById("box-dialog-yesno");
     getSubElm(box, "box-dialog-title").innerText = title;
-    getSubElm(box, "box-dialog-text").innerHTML  = textToHTML(text);
+    getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     getElmById("protect-layer").classList.remove("hide");
     classToggle(box, "hide", "center-container-show");
     getSubElm(box, "box-dialog-btn").focus();
@@ -423,7 +410,7 @@ function boxDialogYesNo(title, text, callbackFunc) {
 }
 
 function boxDialogYesNoClick(e, yes) {
-    var t   = getEventTarget(e);
+    var t = getEventTarget(e);
     var box = t.parentNode.parentNode.parentNode;
     closeBoxDialog(box);
     if (boxDialogFunc)
@@ -434,7 +421,7 @@ function boxDialogQuery(title, text, value, callbackFunc, pwd) {
     hideExistingBoxesDialog();
     var box = getElmById("box-dialog-query");
     getSubElm(box, "box-dialog-title").innerText = title;
-    getSubElm(box, "box-dialog-text").innerHTML  = textToHTML(text);
+    getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     var input = getSubElm(box, "box-dialog-input");
     input.value = value;
     input.setAttribute("type", (pwd ? "password" : ""));
@@ -445,7 +432,7 @@ function boxDialogQuery(title, text, value, callbackFunc, pwd) {
 }
 
 function boxDialogQueryOkClick(e) {
-    var t   = getEventTarget(e);
+    var t = getEventTarget(e);
     var box = t.parentNode.parentNode.parentNode;
     closeBoxDialog(box);
     if (boxDialogFunc)
@@ -458,9 +445,9 @@ function boxDialogGeneric(title, text, elmID, callbackFunc, hideCancel, btnOkTex
     var elm = getElmById(elmID);
     var box = getElmById("box-dialog-generic");
     boxDialogGenericParentElm = elm.parentElement;
-    boxDialogFunc             = callbackFunc;
+    boxDialogFunc = callbackFunc;
     getSubElm(box, "box-dialog-title").innerText = title;
-    getSubElm(box, "box-dialog-text").innerHTML  = textToHTML(text);
+    getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     getSubElm(box, "box-dialog-object").appendChild(elm);
     elm.classList.remove("hide");
     if (hideCancel)
@@ -485,7 +472,7 @@ function boxDialogGenericReplaceObject() {
 }
 
 function boxDialogGenericClick(e, ok) {
-    var t   = getEventTarget(e);
+    var t = getEventTarget(e);
     var box = t.parentNode.parentNode.parentNode;
     closeBoxDialog(box);
     boxDialogGenericReplaceObject();
@@ -497,19 +484,19 @@ function boxDialogList(title, text, itemsConf, onClickCallback) {
     hideExistingBoxesDialog();
     var box = getElmById("box-dialog-list");
     getSubElm(box, "box-dialog-title").innerText = title;
-    getSubElm(box, "box-dialog-text").innerHTML  = textToHTML(text);
+    getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     rmElmChildren("box-dialog-list-items");
-    var list  = getElmById("box-dialog-list-items")
+    var list = getElmById("box-dialog-list-items")
     var model = getElmById("list-item-model");
     for (var i = 0; i < itemsConf.length; i++) {
-        var itemElm      = model.cloneNode(true);
-        itemElm.id       = "";
+        var itemElm = model.cloneNode(true);
+        itemElm.id = "";
         itemElm["ObjCB"] = itemsConf[i]["Value"];
-        itemElm.addEventListener( "click", function(e) {
+        itemElm.addEventListener("click", function (e) {
             e.preventDefault();
             closeBoxDialog(getElmById("box-dialog-list"));
             onClickCallback(e.currentTarget["ObjCB"]);
-        } );
+        });
         getSubElm(itemElm, "picto1").classList.add(itemsConf[i]["Picto1"]);
         getSubElm(itemElm, "list-item-text").innerHTML = textToHTML(itemsConf[i]["Text"]);
         getSubElm(itemElm, "picto2").classList.add(itemsConf[i]["Picto2"], "right");
@@ -542,7 +529,7 @@ function boxDialogProgress(text, percent) {
     getSubElm(box, "box-dialog-text").innerHTML = textToHTML(text);
     var w = percent + "%";
     getSubElm(box, "progress-inner").style.width = w;
-    getSubElm(box, "progress-text").innerText    = w;
+    getSubElm(box, "progress-text").innerText = w;
     if (box.classList.contains("hide")) {
         getElmById("protect-layer").classList.remove("hide");
         classToggle(box, "hide", "center-container-show");
@@ -562,16 +549,16 @@ function clearTerminal(cmTerm) {
 
 function writeTextInTerminal(text, colorClass) {
     if (termTextBuffer != '') {
-        var buf        = termTextBuffer;
+        var buf = termTextBuffer;
         termTextBuffer = '';
         writeTextInTerminal(buf);
     }
-    var ctnr   = getElmById( processing == PRC_EXEC_JAMA ? "elm-jama-func-terminal-container" : "terminal-container" );
-    var cm     = ( processing == PRC_EXEC_JAMA ? codeMirrorJamaTerm : codeMirrorTerm );
-    var doc    = cm.getDoc();
+    var ctnr = getElmById(processing == PRC_EXEC_JAMA ? "elm-jama-func-terminal-container" : "terminal-container");
+    var cm = (processing == PRC_EXEC_JAMA ? codeMirrorJamaTerm : codeMirrorTerm);
+    var doc = cm.getDoc();
     var lCount = doc.lineCount();
     if (lCount >= 1100) {
-        doc.replaceRange("", { line: 0 }, { line: lCount-1000 });
+        doc.replaceRange("", { line: 0 }, { line: lCount - 1000 });
         lCount = doc.lineCount();
     }
     text = text.replaceAll("\r", "");
@@ -579,7 +566,7 @@ function writeTextInTerminal(text, colorClass) {
         text = "\n" + text;
     cm._addLineBefore = text.endsWith("\n");
     if (cm._addLineBefore)
-        text = text.substring(0, text.length-1);
+        text = text.substring(0, text.length - 1);
     doc.replaceRange(text, { line: Infinity });
     if (colorClass)
         for (var i = lCount; i < doc.lineCount(); i++)
@@ -590,12 +577,12 @@ function writeTextInTerminal(text, colorClass) {
 }
 
 function eraseFlashClick(e) {
-    boxDialogYesNo( "⚠️ ERASE?",
-                    "Are you sure you want to erase all the flash memory on your device?",
-                    function(yes) {
-                        if (yes)
-                            wsSendCmd("ERASE-FLASH", getElmById("select-esptool-port").value);
-                    } );
+    boxDialogYesNo("⚠️ ERASE?",
+        "Are you sure you want to erase all the flash memory on your device?",
+        function (yes) {
+            if (yes)
+                wsSendCmd("ERASE-FLASH", getElmById("select-esptool-port").value);
+        });
 }
 
 function writeFirmwareClick(e) {
@@ -604,43 +591,43 @@ function writeFirmwareClick(e) {
 
 function setAppInfo(o) {
     appTitle = o.AppTitle;
-    appVer   = o.AppVer;
-    osName   = o.OSName;
-    
-    getElmById("menubar-title").innerText   = appTitle;
-    getElmById("label-ver-on-os").innerText = "Version "+appVer+" on "+osName;
-    
+    appVer = o.AppVer;
+    osName = o.OSName;
+
+    getElmById("menubar-title").innerText = appTitle;
+    getElmById("label-ver-on-os").innerText = "Version " + appVer + " on " + osName;
+
     setTimeout(checkUpdate, 7000);
 }
 
 function setSerialPorts(list) {
     if (showConnPortsDialog) {
         showConnPortsDialog = false;
-        var itemsConf = [ ];
+        var itemsConf = [];
         for (var i = 0; i < list.length; i++)
-            itemsConf.push( {
-                "Value"  : list[i]["Device"],
-                "Picto1" : ( list[i]["Device"]
-                             ? ( list[i]["USB"]
-                                 ? "list-item-picto-usb"
-                                 : "list-item-picto-serial" )
-                             : "list-item-picto-search" ),
-                "Text"   : list[i]["Name"],
-                "Picto2" : null
-            } );
-        boxDialogList( "😀 Connection to ESP32",
-                       "Select the USB/serial port connected to the device:",
-                       itemsConf,
-                       function(value) {
-                            wsSendCmd("CONNECT-SERIAL", value);
-                       } );
+            itemsConf.push({
+                "Value": list[i]["Device"],
+                "Picto1": (list[i]["Device"]
+                    ? (list[i]["USB"]
+                        ? "list-item-picto-usb"
+                        : "list-item-picto-serial")
+                    : "list-item-picto-search"),
+                "Text": list[i]["Name"],
+                "Picto2": null
+            });
+        boxDialogList("😀 Connection to ESP32",
+            "Select the USB/serial port connected to the device:",
+            itemsConf,
+            function (value) {
+                wsSendCmd("CONNECT-SERIAL", value);
+            });
     }
     rmElmChildren("select-esptool-port");
     var selElm = getElmById("select-esptool-port");
     for (var i = 0; i < list.length; i++) {
-        var optElm   = newElm("option", null, null);
+        var optElm = newElm("option", null, null);
         optElm.value = list[i]["Device"];
-        optElm.text  = list[i]["Name"];
+        optElm.text = list[i]["Name"];
         selElm.appendChild(optElm);
     }
     selElm.value = (currentPort != null ? currentPort : "");
@@ -651,35 +638,35 @@ function execCodeBegin() {
         refreshExecAndStopBtns();
         if (processing == PRC_EXEC_JAMA) {
             var name = execJamaFuncConfig.info.name;
-            var ver  = String(execJamaFuncConfig.info.version).replaceAll(",", ".");
-            boxDialogGeneric( "🚀 " + name + " (v" + ver + ")",
-                              "",
-                              "elm-jama-func-terminal-container",
-                              null,
-                              true,
-                              "Close" );
+            var ver = String(execJamaFuncConfig.info.version).replaceAll(",", ".");
+            boxDialogGeneric("🚀 " + name + " (v" + ver + ")",
+                "",
+                "elm-jama-func-terminal-container",
+                null,
+                true,
+                "Close");
             hide("jama-func-stop-btn");
             getElmById("box-dialog-generic-btn-ok").setAttribute("disabled", "true");
-            setTimeout( function() {
-                            clearTerminal(codeMirrorJamaTerm);
-                            writeTextInTerminal("\n* Jama Func started.\n\n", "terminal-SeaGreen");
-                        },
-                        1 );
+            setTimeout(function () {
+                clearTerminal(codeMirrorJamaTerm);
+                writeTextInTerminal("\n* Jama Func started.\n\n", "terminal-SeaGreen");
+            },
+                1);
             var timeoutSec = execJamaFuncConfig.timeout;
             if (!timeoutSec && timeoutSec != 0)
                 timeoutSec = 5;
             if (timeoutSec)
-                execJamaStopTimeout = setTimeout( function() {
+                execJamaStopTimeout = setTimeout(function () {
                     execJamaStopTimeout = null;
                     show("jama-func-stop-btn");
                 },
-                timeoutSec * 1000 );    
+                    timeoutSec * 1000);
         }
-        execAnimShowTime = setTimeout( function() {
+        execAnimShowTime = setTimeout(function () {
             execAnimShowTime = null;
             showInline("img-processing");
         },
-        500 );
+            500);
     }
 
 }
@@ -724,7 +711,7 @@ function execCodeEnd(normalFinished) {
 
 function setFlashRootPath(path) {
     flashRootPath = path;
-    browsePath    = path;
+    browsePath = path;
 }
 
 function setPinsList(pList) {
@@ -733,14 +720,14 @@ function setPinsList(pList) {
     if (actPage && actPage.id == "page-system-info") {
         rmElmChildren("sysnfo-pins-left");
         rmElmChildren("sysnfo-pins-right");
-        var listLeftElm  = getElmById("sysnfo-pins-left");
+        var listLeftElm = getElmById("sysnfo-pins-left");
         var listRightElm = getElmById("sysnfo-pins-right");
-        var right        = false;
+        var right = false;
         for (var pin in pinsList) {
             s = (pinsList[pin] ? "high" : "low")
-            var picto = newElm("div", null, ["prop-item-picto", "list-item-picto-pin-"+s]);
-            var text  = newElm("div", null, ["prop-item-text"]);
-            text.innerHTML   = "<b>" + pin.padStart(3, " ") + "</b>:" + s.toUpperCase();
+            var picto = newElm("div", null, ["prop-item-picto", "list-item-picto-pin-" + s]);
+            var text = newElm("div", null, ["prop-item-text"]);
+            text.innerHTML = "<b>" + pin.padStart(3, " ") + "</b>:" + s.toUpperCase();
             if (right) {
                 listRightElm.appendChild(picto);
                 listRightElm.appendChild(text);
@@ -752,7 +739,7 @@ function setPinsList(pList) {
             right = !right;
         }
         wsSendCmd("GET-PINS-LIST", true);
-    }    
+    }
 }
 
 function deviceReset() {
@@ -763,98 +750,100 @@ function deviceReset() {
             wsSendCmd("GET-SYS-INFO", true);
             wsSendCmd("GET-PINS-LIST", true);
         }
-        if (actPage.id == "page-networks-info") {
-            wsSendCmd("GET-NETWORKS-INFO", true);
-            networkMiniInfos = { };
-            wsSendCmd("GET-NETWORKS-MIN-INFO", null);
-        }
-        if (actPage.id == "page-sdcard")
-            wsSendCmd("GET-SDCARD-CONF", true);
+    if (actPage.id == "page-networks-info") {
+        wsSendCmd("GET-NETWORKS-INFO", true);
+        networkMiniInfos = {};
+        wsSendCmd("GET-NETWORKS-MIN-INFO", null);
+    }
+    if (actPage.id == "page-sdcard")
+        wsSendCmd("GET-SDCARD-CONF", true);
 }
 
 function showGPIOInfos() {
-    var itemsConf = [ ];
+    var itemsConf = [];
     for (var i in pinoutModels)
-        itemsConf.push( { "Value"  : pinoutModels[i],
-                          "Picto1" : "list-item-picto-pins",
-                          "Text"   : pinoutModels[i],
-                          "Picto2" : null } );
-    boxDialogList( "💡 GPIO pinout memo",
-                   "Choose an Espressif board model to display the GPIO pinout memo:",
-                   itemsConf,
-                   function(value) {
-                       setPinoutInfoImg(value);
-                       getElmById("elm-list-pinout-info").value = value;
-                       boxDialogGeneric( "💡 GPIO pinout of Espressif " + value,
-                                         "",
-                                         "elm-pinout-info",
-                                         null,
-                                         true,
-                                         "Close" );
-                   } );
+        itemsConf.push({
+            "Value": pinoutModels[i],
+            "Picto1": "list-item-picto-pins",
+            "Text": pinoutModels[i],
+            "Picto2": null
+        });
+    boxDialogList("💡 GPIO pinout memo",
+        "Choose an Espressif board model to display the GPIO pinout memo:",
+        itemsConf,
+        function (value) {
+            setPinoutInfoImg(value);
+            getElmById("elm-list-pinout-info").value = value;
+            boxDialogGeneric("💡 GPIO pinout of Espressif " + value,
+                "",
+                "elm-pinout-info",
+                null,
+                true,
+                "Close");
+        });
 }
 
 function recvJamaFuncConfig(config) {
-    var list          = getElmById("list-jama-funcs-items")
-    var model         = getElmById("list-jama-funcs-item-model");
-    var itemElm       = model.cloneNode(true);
-    itemElm.id        = "";
+    var list = getElmById("list-jama-funcs-items")
+    var model = getElmById("list-jama-funcs-item-model");
+    var itemElm = model.cloneNode(true);
+    itemElm.id = "";
     itemElm["Config"] = config;
-    getSubElm(itemElm, "list-jama-funcs-item-open").addEventListener( "click", function(e) {
+    getSubElm(itemElm, "list-jama-funcs-item-open").addEventListener("click", function (e) {
         e.preventDefault();
         var config = e.currentTarget.parentElement.parentElement["Config"]
         openJamaFuncsConfig(config)
-    } );
-    getSubElm(itemElm, "list-jama-funcs-item-export").addEventListener( "click", function(e) {
+    });
+    getSubElm(itemElm, "list-jama-funcs-item-export").addEventListener("click", function (e) {
         e.preventDefault();
-        var config  = e.currentTarget.parentElement.parentElement["Config"]
+        var config = e.currentTarget.parentElement.parentElement["Config"]
         wsSendCmd("EXPORT-JAMA-FUNC", config);
-    } );
-    getSubElm(itemElm, "list-jama-funcs-item-delete").addEventListener( "click", function(e) {
+    });
+    getSubElm(itemElm, "list-jama-funcs-item-delete").addEventListener("click", function (e) {
         e.preventDefault();
         var config = e.currentTarget.parentElement.parentElement["Config"];
-        var ver    = String(config.info.version).replaceAll(",", ".");
-        boxDialogYesNo( "⚠️ DELETE?",
-                        "Are you sure you want to remove <b>" + config.info.name + " " + ver + "</b> from Jama Funcs?",
-                        function(yes) {
-                            if (yes)
-                                wsSendCmd("DELETE-JAMA-FUNC", config);
-                        } );
-    } );
-    getSubElm(itemElm, "list-jama-funcs-item-www").addEventListener( "click", function(e) {
+        var ver = String(config.info.version).replaceAll(",", ".");
+        boxDialogYesNo("⚠️ DELETE?",
+            "Are you sure you want to remove <b>" + config.info.name + " " + ver + "</b> from Jama Funcs?",
+            function (yes) {
+                if (yes)
+                    wsSendCmd("DELETE-JAMA-FUNC", config);
+            });
+    });
+    getSubElm(itemElm, "list-jama-funcs-item-www").addEventListener("click", function (e) {
         e.preventDefault();
-        var config  = e.currentTarget.parentElement.parentElement["Config"]
+        var config = e.currentTarget.parentElement.parentElement["Config"]
         wsSendCmd("OPEN-URL", config.info.www);
-    } );
+    });
     var cfgInfo = config.info;
-    var ver     = cfgInfo.version;
-    getSubElm(itemElm, "list-jama-funcs-item-name").innerText        = cfgInfo.name;
-    getSubElm(itemElm, "list-jama-funcs-item-version").innerText     = "v" + ver[0] + "." + ver[1] + "." + ver[2];
+    var ver = cfgInfo.version;
+    getSubElm(itemElm, "list-jama-funcs-item-name").innerText = cfgInfo.name;
+    getSubElm(itemElm, "list-jama-funcs-item-version").innerText = "v" + ver[0] + "." + ver[1] + "." + ver[2];
     getSubElm(itemElm, "list-jama-funcs-item-description").innerText = cfgInfo.description;
-    getSubElm(itemElm, "list-jama-funcs-item-author").innerText      = cfgInfo.author;
+    getSubElm(itemElm, "list-jama-funcs-item-author").innerText = cfgInfo.author;
     var mailElm = getSubElm(itemElm, "list-jama-funcs-item-mail");
-    var wwwElm  = getSubElm(itemElm, "list-jama-funcs-item-www");
+    var wwwElm = getSubElm(itemElm, "list-jama-funcs-item-www");
     if (cfgInfo.mail) mailElm.innerText = cfgInfo.mail; else hideElm(mailElm);
-    if (cfgInfo.www)  wwwElm.innerText  = cfgInfo.www;  else hideElm(wwwElm);
+    if (cfgInfo.www) wwwElm.innerText = cfgInfo.www; else hideElm(wwwElm);
     itemElm.classList.remove("hide");
     list.appendChild(itemElm);
 }
 
 function openJamaFuncsConfig(config) {
     var ver = String(config.info.version).replaceAll(",", ".");
-    getElmById("exec-jama-funcs-title").innerText       = config.info.name + " v" + ver;
+    getElmById("exec-jama-funcs-title").innerText = config.info.name + " v" + ver;
     getElmById("exec-jama-funcs-description").innerText = config.info.description;
-    getElmById("exec-jama-funcs-author").innerText      = "Developed by " + config.info.author;
+    getElmById("exec-jama-funcs-author").innerText = "Developed by " + config.info.author;
     rmElmChildren("exec-jama-funcs-args");
     var argsTitle = getElmById("exec-jama-funcs-args-title");
-    var argsElm   = getElmById("exec-jama-funcs-args");
+    var argsElm = getElmById("exec-jama-funcs-args");
     if (config.args && Object.keys(config.args).length > 0) {
         for (var arg in config.args) {
-            var labelElm       = newElm("div", null, ["left"]);
+            var labelElm = newElm("div", null, ["left"]);
             labelElm.innerText = "▶️ " + config.args[arg].label;
             argsElm.appendChild(labelElm);
-            var type     = config.args[arg].type;
-            var value    = config.args[arg].value;
+            var type = config.args[arg].type;
+            var value = config.args[arg].value;
             var fieldElm = null;
             if (type == "str") {
                 fieldElm = newElm("input", null, ["exec-jama-funcs-input"]);
@@ -880,37 +869,37 @@ function openJamaFuncsConfig(config) {
                     fieldElm.classList.add("exec-jama-funcs-bool-on");
                 else
                     fieldElm.classList.add("exec-jama-funcs-bool-off");
-                fieldElm.addEventListener( "click", function(e) {
+                fieldElm.addEventListener("click", function (e) {
                     e.preventDefault();
                     var elm = e.currentTarget;
                     classToggle(elm, "exec-jama-funcs-bool-off", "exec-jama-funcs-bool-on");
-                } );
+                });
             }
             else if (type == "list") {
-                fieldElm   = newElm("select", null, ["exec-jama-funcs-input"]);
+                fieldElm = newElm("select", null, ["exec-jama-funcs-input"]);
                 var optElm = newElm("option", null, null);
                 optElm.value = "";
-                optElm.text  = "No GPIO";
+                optElm.text = "No GPIO";
                 fieldElm.appendChild(optElm);
                 for (var pin in pinsList) {
-                    var optElm   = newElm("option", null, null);
+                    var optElm = newElm("option", null, null);
                     optElm.value = pin;
-                    optElm.text  = "GPIO-" + pin;
+                    optElm.text = "GPIO-" + pin;
                     fieldElm.appendChild(optElm);
                 }
                 btnElm = newElm("input", null, ["button-little-text", "right"]);
-                btnElm.type  = 'button';
+                btnElm.type = 'button';
                 btnElm.value = ' 💡 ';
-                btnElm.addEventListener("click", function(e) { showGPIOInfos(); });
+                btnElm.addEventListener("click", function (e) { showGPIOInfos(); });
                 argsElm.appendChild(btnElm);
             }
             else if (type == "dict") {
-                fieldElm  = newElm("select", null, ["exec-jama-funcs-input"]);
+                fieldElm = newElm("select", null, ["exec-jama-funcs-input"]);
                 var items = config.args[arg].items;
                 for (var item in items) {
-                    var optElm   = newElm("option", null, null);
+                    var optElm = newElm("option", null, null);
                     optElm.value = item;
-                    optElm.text  = items[item];
+                    optElm.text = items[item];
                     fieldElm.appendChild(optElm);
                 }
                 if (config.args[arg].value)
@@ -956,8 +945,8 @@ function getFileContent(filepath) {
                     return;
                 }
             }
-            processing        = PRC_TRANSFER;
-            contentBytesArr   = [ ];
+            processing = PRC_TRANSFER;
+            contentBytesArr = [];
             contentRemotePath = filepath;
             wsSendCmd("GET-FILE-CONTENT", filepath);
         }
@@ -969,22 +958,22 @@ function getFileContent(filepath) {
 
 function setListDirAndFiles(path, entries) {
     browsePath = path;
-    setCurrentDirLabel("/" + path.substring(path.lastIndexOf("/")+1));
+    setCurrentDirLabel("/" + path.substring(path.lastIndexOf("/") + 1));
     rmElmChildren("browse-list-files");
-    var list  = getElmById("browse-list-files");
+    var list = getElmById("browse-list-files");
     var model = getElmById("list-files-model");
     function _addEntry(filename, filesize) {
-        var listElm           = model.cloneNode(true);
-        listElm.id            = "";
+        var listElm = model.cloneNode(true);
+        listElm.id = "";
         listElm["filenameCB"] = filename;
         listElm["filesizeCB"] = filesize;
-        var title             = browsePath + "/" + filename;
+        var title = browsePath + "/" + filename;
         if (filesize != null)
             title += "\nFile size: " + sizeToText(filesize, "octets");
         listElm.setAttribute("Title", title);
-        listElm.addEventListener( "click", function(e) {
+        listElm.addEventListener("click", function (e) {
             e.preventDefault();
-            var elm      = e.currentTarget;
+            var elm = e.currentTarget;
             var filename = elm["filenameCB"];
             if (elm.id != "list-files-selected") {
                 var list = getElmById("browse-list-files")
@@ -996,10 +985,10 @@ function setListDirAndFiles(path, entries) {
             else
                 elm.id = "";
             setActifListFilesButtons();
-        } );
-        listElm.addEventListener( "dblclick", function(e) {
+        });
+        listElm.addEventListener("dblclick", function (e) {
             e.preventDefault();
-            var elm      = e.currentTarget;
+            var elm = e.currentTarget;
             var filename = elm["filenameCB"];
             var filesize = elm["filesizeCB"];
             if (filename != "..") {
@@ -1017,18 +1006,18 @@ function setListDirAndFiles(path, entries) {
             }
             else if (filename.toUpperCase().endsWith(".PY"))
                 getFileContent(browsePath + "/" + filename);
-        } );
-        var sdcard     = (browsePath + "/" + filename == sdcardMountPoint);
-        var pictoClass = ( filesize == null
-                                ? ( sdcard
-                                    ? "list-files-picto-sdcard"
-                                    : "list-files-picto-dir" )
-                                : filename.toUpperCase().endsWith(".PY")
-                                    ? "list-files-picto-file-python"
-                                    : "list-files-picto-file" );
+        });
+        var sdcard = (browsePath + "/" + filename == sdcardMountPoint);
+        var pictoClass = (filesize == null
+            ? (sdcard
+                ? "list-files-picto-sdcard"
+                : "list-files-picto-dir")
+            : filename.toUpperCase().endsWith(".PY")
+                ? "list-files-picto-file-python"
+                : "list-files-picto-file");
         getSubElm(listElm, "list-files-picto").classList.add(pictoClass);
         var text = (filesize == null ? "/" : "") + filename + "\n"
-                 + (filesize == null ? (sdcard ? "SD card" : "Folder") : sizeToText(filesize, "octets"));
+            + (filesize == null ? (sdcard ? "SD card" : "Folder") : sizeToText(filesize, "octets"));
         getSubElm(listElm, "list-files-text").innerText = text;
         listElm.classList.remove("hide");
         list.appendChild(listElm);
@@ -1042,38 +1031,68 @@ function setListDirAndFiles(path, entries) {
 
 function addNewCodeEditorElm(code) {
     var ceElm = newElm("div", null, ["code-editor", "hide"]);
-    var codeMirror = CodeMirror( ceElm, {
-        mode              : "python",
-        theme             : "lucario",
-        lineNumbers       : true,
-        indentUnit        : 4,
-        tabSize           : 4,
-        indentWithTabs    : false,
-        smartIndent       : true,
-        matchBrackets     : true,
-        autoCloseBrackets : true,
-        openDialog        : true,
-        searchCursor      : true,
-        search            : true,
-        scrollbarStyle    : "overlay",
-        extraKeys         : { "Ctrl-F"    : "findPersistent",
-                              "Cmd-F"     : "findPersistent",
-                              "Tab"       : (cm) => {
-                                                if (cm.getMode().name === 'null')
-                                                    cm.execCommand('insertTab');
-                                                else
-                                                    if (cm.somethingSelected())
-                                                        cm.execCommand('indentMore');
-                                                    else
-                                                        cm.execCommand('insertSoftTab');
-                                            },
-                              "Shift-Tab" : (cm) => cm.execCommand('indentLess')
-                            },
-        value             : code
-    } );
+    var codeMirror = CodeMirror(ceElm, {
+        mode: "python",
+        theme: "monokai",
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        smartIndent: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        openDialog: true,
+        searchCursor: true,
+        search: true,
+        scrollbarStyle: "overlay",
+        highlightSelectionMatches: { showToken: true, annotateScrollbar: false },
+        hintOptions: {
+            hint: CodeMirror.hint.anyword,
+            completeSingle: false,
+            alignWithWord: true,
+            closeOnUnfocus: true
+        },
+        extraKeys: {
+            "Ctrl-F": "findPersistent",
+            "Cmd-F": "findPersistent",
+            "Tab": (cm) => {
+                if (cm.getMode().name === 'null')
+                    cm.execCommand('insertTab');
+                else
+                    if (cm.somethingSelected())
+                        cm.execCommand('indentMore');
+                    else
+                        cm.execCommand('insertSoftTab');
+            },
+            "Shift-Tab": (cm) => cm.execCommand('indentLess'),
+            "Ctrl-Space": (cm) => cm.showHint({ hint: CodeMirror.hint.anyword }),
+            "Alt-Space": (cm) => cm.showHint({ hint: CodeMirror.hint.anyword })
+        },
+        value: code
+    });
     codeMirror.setSize("100%", "100%");
-    codeMirror.on("change", function(arg) {
+    codeMirror.on("change", function (arg) {
         refreshExecAndStopBtns();
+    });
+    codeMirror.on("inputRead", function (cm, change) {
+        if (change.origin === "+input") {
+            var text = change.text[0];
+            console.log("Input detected:", text);
+            if (/^[a-zA-Z0-9_]$/.test(text)) {
+                if (cm.state.completionActive) return;
+                console.log("Attempting to show hints...");
+                setTimeout(() => {
+                    if (CodeMirror.hint && CodeMirror.hint.anyword) {
+                        cm.showHint({
+                            hint: CodeMirror.hint.anyword,
+                            completeSingle: false
+                        });
+                    } else {
+                        console.error("CodeMirror anyword hint helper not found!");
+                    }
+                }, 50);
+            }
+        }
     });
     ceElm["codeMirror"] = codeMirror;
     getElmById("code-editors").appendChild(ceElm);
@@ -1081,30 +1100,30 @@ function addNewCodeEditorElm(code) {
 }
 
 function createTabCode(filename, code) {
-    var ctnr    = getElmById("tabs-code-container");
-    var model   = getElmById("tab-code-model");
-    var tabElm  = model.cloneNode(true);
-    tabElm.id   = "";
-    tabElm.addEventListener( "click", function(e) {
+    var ctnr = getElmById("tabs-code-container");
+    var model = getElmById("tab-code-model");
+    var tabElm = model.cloneNode(true);
+    tabElm.id = "";
+    tabElm.addEventListener("click", function (e) {
         e.preventDefault();
         var tabElm = e.currentTarget;
         selectTabCode(tabElm);
-    } );
-    tabElm.addEventListener( "dblclick", function(e) {
+    });
+    tabElm.addEventListener("dblclick", function (e) {
         e.preventDefault();
         e.stopPropagation();
-    } );
-    getSubElm(tabElm, "tab-code-close").addEventListener( "click", function(e) {
+    });
+    getSubElm(tabElm, "tab-code-close").addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
         var tabElm = e.currentTarget.parentElement;
         wantToCloseTabCode(tabElm);
-    } );
+    });
     tabElm["tabData"] = {
-        "filename"   : null,
-        "codeName"   : null,
-        "codeEditor" : addNewCodeEditorElm(code),
-        "originCode" : code
+        "filename": null,
+        "codeName": null,
+        "codeEditor": addNewCodeEditorElm(code),
+        "originCode": code
     };
     setTabCodeFilename(tabElm, filename);
     tabElm.classList.remove("hide");
@@ -1114,7 +1133,7 @@ function createTabCode(filename, code) {
 }
 
 function setTabCodeFilename(tabElm, newFilename) {
-    var tabName = (newFilename ? newFilename.substring(newFilename.lastIndexOf("/")+1) : "New " + counterNewFile++);
+    var tabName = (newFilename ? newFilename.substring(newFilename.lastIndexOf("/") + 1) : "New " + counterNewFile++);
     getSubElm(tabElm, "tab-code-text").innerText = tabName;
     if (newFilename)
         tabElm.setAttribute("Title", newFilename);
@@ -1150,11 +1169,11 @@ function isTabCodeModified(tabElm) {
 function closeTabCode(tabElm) {
     if (tabElm.id == "tab-code-selected") {
         tabs = Array.from(tabElm.parentElement.children);
-        idx  = tabs.indexOf(tabElm);
-        if (idx < tabs.length-1)
-            selectTabCode(tabs[idx+1]);
+        idx = tabs.indexOf(tabElm);
+        if (idx < tabs.length - 1)
+            selectTabCode(tabs[idx + 1]);
         else if (idx > 0)
-            selectTabCode(tabs[idx-1]);
+            selectTabCode(tabs[idx - 1]);
         else
             createTabCode(null, "");
     }
@@ -1167,17 +1186,17 @@ function closeTabCode(tabElm) {
 function wantToCloseTabCode(tabElm) {
     if (isTabCodeModified(tabElm)) {
         var filename = tabElm["tabData"]["filename"];
-        var text     = ( filename
-                         ? "Do you want to save the changes of file <b>'" + filename + "'</b> before closing it?"
-                         : "Do you want to save this new file in <b>'" + browsePath + "/'</b> before closing it?" );
-        boxDialogYesNo( "⚠️ NOT SAVED...",
-                        text,
-                        function(yes) {
-                            if (yes)
-                                saveTabCode(tabElm, true);
-                            else
-                                closeTabCode(tabElm);
-                        } );
+        var text = (filename
+            ? "Do you want to save the changes of file <b>'" + filename + "'</b> before closing it?"
+            : "Do you want to save this new file in <b>'" + browsePath + "/'</b> before closing it?");
+        boxDialogYesNo("⚠️ NOT SAVED...",
+            text,
+            function (yes) {
+                if (yes)
+                    saveTabCode(tabElm, true);
+                else
+                    closeTabCode(tabElm);
+            });
     }
     else
         closeTabCode(tabElm);
@@ -1189,12 +1208,12 @@ function recvFileContentData(data) {
 
 function endOfGetFileContent() {
     processing = PRC_NONE;
-    var code   = "";
+    var code = "";
     if (contentBytesArr.length > 0) {
-        var typedUTF8Data  = new Int8Array(contentBytesArr);
-        var decoder        = new TextDecoder();
-        code               = decoder.decode(typedUTF8Data);
-        contentBytesArr    = [ ];
+        var typedUTF8Data = new Int8Array(contentBytesArr);
+        var decoder = new TextDecoder();
+        code = decoder.decode(typedUTF8Data);
+        contentBytesArr = [];
     }
     createTabCode(contentRemotePath, code);
     showIDE();
@@ -1203,35 +1222,35 @@ function endOfGetFileContent() {
 function saveTabCode(tabElm, closeTabAfter) {
     if (connectionState)
         if (processing == PRC_NONE) {
-            var tabData  = tabElm["tabData"];
+            var tabData = tabElm["tabData"];
             var filename = tabData["filename"];
-            var code     = tabData["codeEditor"]["codeMirror"].getValue();
+            var code = tabData["codeEditor"]["codeMirror"].getValue();
             if (code) {
                 if (filename == null) {
-                    boxDialogQuery( "💾 Save new file",
-                                    "Enter a filename to save your new MicroPython file in <b>" + browsePath + "/</b>:",
-                                    "",
-                                    function(filename) {
-                                        filename = filename.trim();
-                                        if (filename != "") {
-                                            if (!filename.toUpperCase().endsWith(".PY"))
-                                                filename += ".py";
-                                            setTabCodeFilename(tabElm, browsePath + "/" + filename);
-                                            saveTabCode(tabElm, closeTabAfter);
-                                        }
-                                } );
+                    boxDialogQuery("💾 Save new file",
+                        "Enter a filename to save your new MicroPython file in <b>" + browsePath + "/</b>:",
+                        "",
+                        function (filename) {
+                            filename = filename.trim();
+                            if (filename != "") {
+                                if (!filename.toUpperCase().endsWith(".PY"))
+                                    filename += ".py";
+                                setTabCodeFilename(tabElm, browsePath + "/" + filename);
+                                saveTabCode(tabElm, closeTabAfter);
+                            }
+                        });
                     return;
                 };
-                processing          = PRC_TRANSFER;
-                contentRemotePath   = filename;
-                keepTabCodeElm      = tabElm;
+                processing = PRC_TRANSFER;
+                contentRemotePath = filename;
+                keepTabCodeElm = tabElm;
                 keepCloseTabCodeElm = closeTabAfter;
-                var encoder         = new TextEncoder();
-                var typedUTF8Data   = encoder.encode(code);
+                var encoder = new TextEncoder();
+                var typedUTF8Data = encoder.encode(code);
                 var contentBytesArr = Array.from(typedUTF8Data);
                 var args = {
-                    "name" : contentRemotePath,
-                    "size" : contentBytesArr.length
+                    "name": contentRemotePath,
+                    "size": contentBytesArr.length
                 }
                 wsSendCmd("START-CONTENT-TRANSFER", args);
                 var i = 0;
@@ -1261,48 +1280,48 @@ function endOfFileContentData() {
 
 function setSystemInfo(o) {
 
-    getElmById("label-sysnfo-uid").innerText        = o.uid;
-    getElmById("label-sysnfo-freq").innerText       = o.freq + " MHz";
+    getElmById("label-sysnfo-uid").innerText = o.uid;
+    getElmById("label-sysnfo-freq").innerText = o.freq + " MHz";
     getElmById("label-sysnfo-flash-size").innerText = sizeToText(o.flashSize, "Bytes");
-    getElmById("label-sysnfo-platform").innerText   = o.os.platform;
-    getElmById("label-sysnfo-system").innerText     = o.os.system;
-    getElmById("label-sysnfo-release").innerText    = o.os.release;
-    getElmById("label-sysnfo-version").innerText    = o.os.version;
-    getElmById("label-sysnfo-implem").innerText     = o.os.implem;
+    getElmById("label-sysnfo-platform").innerText = o.os.platform;
+    getElmById("label-sysnfo-system").innerText = o.os.system;
+    getElmById("label-sysnfo-release").innerText = o.os.release;
+    getElmById("label-sysnfo-version").innerText = o.os.version;
+    getElmById("label-sysnfo-implem").innerText = o.os.implem;
     setTextTag("label-sysnfo-spiram", (o.os.spiram ? "Yes" : "No"), o.os.spiram);
-    getElmById("label-sysnfo-mpyver").innerText     = o.os.mpyver;
+    getElmById("label-sysnfo-mpyver").innerText = o.os.mpyver;
 
     var bootCfgElm = getElmById("sysnfo-boot-config");
     while (bootCfgElm.childElementCount > 0)
         bootCfgElm.removeChild(bootCfgElm.lastChild);
     for (var i in o.bootcfg) {
-        var desc = ( o.bootcfg[i] == "BOOT" ? "🆗 Boot configuration file"       :
-                     o.bootcfg[i] == "MCU"  ? "▶️ Update system setting"         :
-                     o.bootcfg[i] == "STA"  ? "▶️ Connect Wi-Fi"                 :
-                     o.bootcfg[i] == "AP"   ? "▶️ Open Wi-Fi access point"       :
-                     o.bootcfg[i] == "ETH"  ? "▶️ Initialize Ethernet interface" :
-                     o.bootcfg[i] == "SD"   ? "▶️ Mount SD card to file system"  :
-                     null );
+        var desc = (o.bootcfg[i] == "BOOT" ? "🆗 Boot configuration file" :
+            o.bootcfg[i] == "MCU" ? "▶️ Update system setting" :
+                o.bootcfg[i] == "STA" ? "▶️ Connect Wi-Fi" :
+                    o.bootcfg[i] == "AP" ? "▶️ Open Wi-Fi access point" :
+                        o.bootcfg[i] == "ETH" ? "▶️ Initialize Ethernet interface" :
+                            o.bootcfg[i] == "SD" ? "▶️ Mount SD card to file system" :
+                                null);
         if (desc) {
-            var elm  = newElm("div", null, ["prop-item"]);
+            var elm = newElm("div", null, ["prop-item"]);
             var text = newElm("div", null, ["prop-item-text"]);
             text.innerText = desc;
             elm.appendChild(text);
             if (o.bootcfg[i] != 'BOOT' || o.bootcfg.length == 1) {
-                var btnElm     = newElm("div", "bootcfg-" + o.bootcfg[i], ["prop-item-picto", "prop-item-picto-btn", "right", "list-item-picto-remove"]);
-                btnElm.title   = "Remove this setting";
-                btnElm["cfg"]  = o.bootcfg[i];
+                var btnElm = newElm("div", "bootcfg-" + o.bootcfg[i], ["prop-item-picto", "prop-item-picto-btn", "right", "list-item-picto-remove"]);
+                btnElm.title = "Remove this setting";
+                btnElm["cfg"] = o.bootcfg[i];
                 btnElm["desc"] = desc;
-                btnElm.addEventListener( "click", function(e) {
+                btnElm.addEventListener("click", function (e) {
                     var target = getEventTarget(e);
-                    boxDialogYesNo( "⚠️ REMOVE?",
-                                    "<b>" + target.desc + "</b>\n" +
-                                    "Are you sure you want to remove this setting from the boot of your device?",
-                                    function(yes) {
-                                        if (yes)
-                                            wsSendCmd("REMOVE-CFG", target.cfg);
-                                    } );
-                } );
+                    boxDialogYesNo("⚠️ REMOVE?",
+                        "<b>" + target.desc + "</b>\n" +
+                        "Are you sure you want to remove this setting from the boot of your device?",
+                        function (yes) {
+                            if (yes)
+                                wsSendCmd("REMOVE-CFG", target.cfg);
+                        });
+                });
                 elm.appendChild(btnElm);
             }
             bootCfgElm.appendChild(elm);
@@ -1324,11 +1343,11 @@ function setSystemInfo(o) {
         var tdElm = newElm("td");
         tdElm.innerText = part[4];
         trElm.appendChild(tdElm);
-        
+
         var tdElm = newElm("td");
         tdElm.innerText = "0x" + part[2].toString(16);
         trElm.appendChild(tdElm);
-        
+
         var tdElm = newElm("td");
         tdElm.innerText = "0x" + part[3].toString(16);
         trElm.appendChild(tdElm);
@@ -1344,7 +1363,7 @@ function setSystemInfo(o) {
 
         partElm.appendChild(trElm);
     }
-    
+
     var actPage = getActivePage();
     if (!actPage || actPage.id != "page-system-info") {
         showPage("page-system-info");
@@ -1359,51 +1378,51 @@ function setNetworksInfo(o) {
         hide("keepSTAConfigBtn");
     setTextTag("label-netnfo-wl-sta-active", (o.wifiSTA.active ? "Yes" : "No"), o.wifiSTA.active);
     if (o.wifiSTA.active) showInline("close-IF-STA"); else hide("close-IF-STA");
-    getElmById("label-netnfo-wl-sta-mac").innerText     = o.wifiSTA.mac;
-    getElmById("label-netnfo-wl-sta-ssid").innerText    = o.wifiSTA.ssid;
-    getElmById("label-netnfo-wl-sta-ip").innerText      = o.wifiSTA.ip;
-    getElmById("label-netnfo-wl-sta-mask").innerText    = o.wifiSTA.mask;
+    getElmById("label-netnfo-wl-sta-mac").innerText = o.wifiSTA.mac;
+    getElmById("label-netnfo-wl-sta-ssid").innerText = o.wifiSTA.ssid;
+    getElmById("label-netnfo-wl-sta-ip").innerText = o.wifiSTA.ip;
+    getElmById("label-netnfo-wl-sta-mask").innerText = o.wifiSTA.mask;
     getElmById("label-netnfo-wl-sta-gateway").innerText = o.wifiSTA.gateway;
-    getElmById("label-netnfo-wl-sta-dns").innerText     = o.wifiSTA.dns;
+    getElmById("label-netnfo-wl-sta-dns").innerText = o.wifiSTA.dns;
 
     if (!o.wifiAP.active)
         hide("keepAPConfigBtn");
     setTextTag("label-netnfo-wl-ap-active", (o.wifiAP.active ? "Yes" : "No"), o.wifiAP.active);
     if (o.wifiAP.active) showInline("close-IF-AP"); else hide("close-IF-AP");
-    getElmById("label-netnfo-wl-ap-mac").innerText      = o.wifiAP.mac;
-    getElmById("label-netnfo-wl-ap-ssid").innerText     = o.wifiAP.ssid;
-    getElmById("label-netnfo-wl-ap-ip").innerText       = o.wifiAP.ip;
-    getElmById("label-netnfo-wl-ap-mask").innerText     = o.wifiAP.mask;
-    getElmById("label-netnfo-wl-ap-gateway").innerText  = o.wifiAP.gateway;
-    getElmById("label-netnfo-wl-ap-dns").innerText      = o.wifiAP.dns;
+    getElmById("label-netnfo-wl-ap-mac").innerText = o.wifiAP.mac;
+    getElmById("label-netnfo-wl-ap-ssid").innerText = o.wifiAP.ssid;
+    getElmById("label-netnfo-wl-ap-ip").innerText = o.wifiAP.ip;
+    getElmById("label-netnfo-wl-ap-mask").innerText = o.wifiAP.mask;
+    getElmById("label-netnfo-wl-ap-gateway").innerText = o.wifiAP.gateway;
+    getElmById("label-netnfo-wl-ap-dns").innerText = o.wifiAP.dns;
     if (o.wifiAP.active) showInline("show-AP-cli-addr"); else hide("show-AP-cli-addr");
 
     var ok = (o.eth && o.eth.mac);
     if (!ok)
         hide("keepETHConfigBtn");
-    setTextTag("label-netnfo-eth-active", ( !o.eth ? "Not supported"
-                                            : !ok ? "No driver"
-                                              : o.eth.enable ? "Yes" : "No" ),
-                                            ok ? o.eth.enable : null);
-    if (o.eth && !ok)        showInline("init-ETH-driver"); else hide("init-ETH-driver");
-    if (ok && !o.eth.enable) showInline("enable-IF-ETH");   else hide("enable-IF-ETH");
-    if (ok && o.eth.enable)  showInline("disable-IF-ETH");  else hide("disable-IF-ETH");
-    getElmById("label-netnfo-eth-mac").innerText        = (ok ? o.eth.mac : "");
-    setTextTag("label-netnfo-eth-status", ( !ok || !o.eth.enable ? ""
-                                            : !o.eth.linkup ? "Unplugged"
-                                              : "Plugged in " + (o.eth.gotip ? "(IP Ok)" : "(No IP)")),
-                                            ok && o.eth.enable ? o.eth.linkup : null);
-    getElmById("label-netnfo-eth-ip").innerText         = (ok ? o.eth.ip : "");
-    getElmById("label-netnfo-eth-mask").innerText       = (ok ? o.eth.mask : "");
-    getElmById("label-netnfo-eth-gateway").innerText    = (ok ? o.eth.gateway : "");
-    getElmById("label-netnfo-eth-dns").innerText        = (ok ? o.eth.dns : "");
+    setTextTag("label-netnfo-eth-active", (!o.eth ? "Not supported"
+        : !ok ? "No driver"
+            : o.eth.enable ? "Yes" : "No"),
+        ok ? o.eth.enable : null);
+    if (o.eth && !ok) showInline("init-ETH-driver"); else hide("init-ETH-driver");
+    if (ok && !o.eth.enable) showInline("enable-IF-ETH"); else hide("enable-IF-ETH");
+    if (ok && o.eth.enable) showInline("disable-IF-ETH"); else hide("disable-IF-ETH");
+    getElmById("label-netnfo-eth-mac").innerText = (ok ? o.eth.mac : "");
+    setTextTag("label-netnfo-eth-status", (!ok || !o.eth.enable ? ""
+        : !o.eth.linkup ? "Unplugged"
+            : "Plugged in " + (o.eth.gotip ? "(IP Ok)" : "(No IP)")),
+        ok && o.eth.enable ? o.eth.linkup : null);
+    getElmById("label-netnfo-eth-ip").innerText = (ok ? o.eth.ip : "");
+    getElmById("label-netnfo-eth-mask").innerText = (ok ? o.eth.mask : "");
+    getElmById("label-netnfo-eth-gateway").innerText = (ok ? o.eth.gateway : "");
+    getElmById("label-netnfo-eth-dns").innerText = (ok ? o.eth.dns : "");
 
     setTextTag("label-netnfo-internet-ok", (o.internetOK ? "Yes" : "No"), o.internetOK);
-    
+
     setTextTag("label-netnfo-ble-active", (o.ble.active ? "Yes" : "No"), o.ble.active);
     if (o.ble.active) showInline("close-IF-BLE"); else hide("close-IF-BLE");
-    getElmById("label-netnfo-ble-mac").innerText        = o.ble.mac;
-    
+    getElmById("label-netnfo-ble-mac").innerText = o.ble.mac;
+
     if (showNetworksInfoPage) {
         showNetworksInfoPage = false;
         var actPage = getActivePage();
@@ -1420,11 +1439,11 @@ function setNetworksMinInfo(o) {
     var actPage = getActivePage();
     if (actPage && actPage.id == "page-networks-info") {
         if (networkMiniInfos != null) {
-            getElmById("label-netnfo-wl-sta-rssi").innerText   = (o.staRSSI ? o.staRSSI + " dBm" : "N/A");
+            getElmById("label-netnfo-wl-sta-rssi").innerText = (o.staRSSI ? o.staRSSI + " dBm" : "N/A");
             getElmById("label-netnfo-wl-ap-clients").innerText = (o.apStaCount != undefined ? o.apStaCount : "N/A");
-            if ( Boolean(o.staRSSI)    != Boolean(networkMiniInfos.staRSSI)    ||
-                 Boolean(o.apStaCount) != Boolean(networkMiniInfos.apStaCount) ||
-                 o.ethStatus           != networkMiniInfos.ethStatus )
+            if (Boolean(o.staRSSI) != Boolean(networkMiniInfos.staRSSI) ||
+                Boolean(o.apStaCount) != Boolean(networkMiniInfos.apStaCount) ||
+                o.ethStatus != networkMiniInfos.ethStatus)
                 wsSendCmd("GET-NETWORKS-INFO", true);
         }
         wsSendCmd("GET-NETWORKS-MIN-INFO", null);
@@ -1433,81 +1452,81 @@ function setNetworksMinInfo(o) {
 }
 
 function setWiFiNetworks(networks) {
-    var itemsConf = [ ];
+    var itemsConf = [];
     for (var ssid in networks) {
         var rssi = networks[ssid]["rssi"];
-        var r    = ( rssi == 0    ? 1 :
-                     rssi <= -110 ? 1 :
-                     rssi <  -100 ? 2 :
-                     rssi <  -86  ? 3 :
-                     rssi <  -70  ? 4 :
-                     rssi <  -60  ? 5 :
-                                    6 );
-        itemsConf.push( {
-            "Value"  : { ssid: ssid, secure: (networks[ssid]["authCode"] > 0) },
-            "Picto1" : "list-item-picto-wifi-" + (networks[ssid]["authCode"] > 0 ? "secure" : "open"),
-            "Text"   : ssid + " (" + networks[ssid]["authName"] + ")",
-            "Picto2" : "list-item-picto-wifi-sig" + r
-        } )
+        var r = (rssi == 0 ? 1 :
+            rssi <= -110 ? 1 :
+                rssi < -100 ? 2 :
+                    rssi < -86 ? 3 :
+                        rssi < -70 ? 4 :
+                            rssi < -60 ? 5 :
+                                6);
+        itemsConf.push({
+            "Value": { ssid: ssid, secure: (networks[ssid]["authCode"] > 0) },
+            "Picto1": "list-item-picto-wifi-" + (networks[ssid]["authCode"] > 0 ? "secure" : "open"),
+            "Text": ssid + " (" + networks[ssid]["authName"] + ")",
+            "Picto2": "list-item-picto-wifi-sig" + r
+        })
     };
-    boxDialogList( "📡 Wireless network connection",
-                   "Select a Wi-Fi access point to connect the device:",
-                   itemsConf,
-                   function(value) {
-                        if (value.secure)
-                            boxDialogQuery( "🔐 Secure Wi-Fi network",
-                                            "The " + value.ssid + " access point requires an authentication key:",
-                                            "",
-                                            function(key) {
-                                                key = key.trim();
-                                                if (key != "") {
-                                                    keepConfig.STA = { ssid: value.ssid, key: key };
-                                                    wsSendCmd("WIFI-CONNECT", keepConfig.STA);
-                                                }
-                                                else
-                                                    showError("The authentication key is required.");
-                                            },
-                                            true );
-                        else {
-                            keepConfig.STA = { ssid: value.ssid, key: null };
+    boxDialogList("📡 Wireless network connection",
+        "Select a Wi-Fi access point to connect the device:",
+        itemsConf,
+        function (value) {
+            if (value.secure)
+                boxDialogQuery("🔐 Secure Wi-Fi network",
+                    "The " + value.ssid + " access point requires an authentication key:",
+                    "",
+                    function (key) {
+                        key = key.trim();
+                        if (key != "") {
+                            keepConfig.STA = { ssid: value.ssid, key: key };
                             wsSendCmd("WIFI-CONNECT", keepConfig.STA);
                         }
-                   } );
+                        else
+                            showError("The authentication key is required.");
+                    },
+                    true);
+            else {
+                keepConfig.STA = { ssid: value.ssid, key: null };
+                wsSendCmd("WIFI-CONNECT", keepConfig.STA);
+            }
+        });
 }
 
 function mcuSettingUpdated() {
     show("keepMCUConfigBtn");
-    boxDialogAlert( "😎 System setting updated with success!",
-                    "The system setting of your device is now updated.\n" +
-                    "Afterwards, you can make this configuration persistent." );
+    boxDialogAlert("😎 System setting updated with success!",
+        "The system setting of your device is now updated.\n" +
+        "Afterwards, you can make this configuration persistent.");
 }
 
 function wifiConnected() {
     show("keepSTAConfigBtn");
-    boxDialogAlert( "😎 Wi-Fi connected with success!",
-                    "The device is now connected to access point " + keepConfig.STA.ssid + ".\n" +
-                    "Afterwards, you can make this configuration persistent." );
+    boxDialogAlert("😎 Wi-Fi connected with success!",
+        "The device is now connected to access point " + keepConfig.STA.ssid + ".\n" +
+        "Afterwards, you can make this configuration persistent.");
 }
 
 function wifiAPOpened() {
     show("keepAPConfigBtn");
-    boxDialogAlert( "😎 Wi-Fi AP opened with success!",
-                    "The device is now reachable on the access point " + keepConfig.AP.ssid + ".\n" +
-                    "Afterwards, you can make this configuration persistent." );
+    boxDialogAlert("😎 Wi-Fi AP opened with success!",
+        "The device is now reachable on the access point " + keepConfig.AP.ssid + ".\n" +
+        "Afterwards, you can make this configuration persistent.");
 }
 
 function ethInitialized() {
     show("keepETHConfigBtn");
-    boxDialogAlert( "😎 Ethernet initialized with success!",
-                    "The Ethernet PHY interface is now initialized and can be activated.\n" +
-                    "Afterwards, you can make this configuration persistent." );
+    boxDialogAlert("😎 Ethernet initialized with success!",
+        "The Ethernet PHY interface is now initialized and can be activated.\n" +
+        "Afterwards, you can make this configuration persistent.");
 }
 
 function sdCardMounted() {
     show("keepSDConfigBtn");
-    boxDialogAlert( "😎 SD card mounted with success!",
-                    "The SD card is now mounted to the device's file system on " + keepConfig.SD.mountpt +".\n" +
-                    "Afterwards, you can make this configuration persistent." );
+    boxDialogAlert("😎 SD card mounted with success!",
+        "The SD card is now mounted to the device's file system on " + keepConfig.SD.mountpt + ".\n" +
+        "Afterwards, you can make this configuration persistent.");
 }
 
 function showAPClientsAddr(cliAddr) {
@@ -1533,20 +1552,20 @@ function refreshJamaFuncs() {
 }
 
 function importModules(modules) {
-    var itemsConf = [ ];
+    var itemsConf = [];
     for (var i = 0; i < modules.length; i++)
-        itemsConf.push( {
-            "Value"  : modules[i],
-            "Picto1" : "list-item-picto-python",
-            "Text"   : "Module " + modules[i],
-            "Picto2" : null
-        } );
-    boxDialogList( "⬇️ Import MicroPython module",
-                   "Select an available MicroPython module to import:",
-                   itemsConf,
-                   function(value) {
-                        wsSendCmd("IMPORT-MODULE", value);
-                   } );
+        itemsConf.push({
+            "Value": modules[i],
+            "Picto1": "list-item-picto-python",
+            "Text": "Module " + modules[i],
+            "Picto2": null
+        });
+    boxDialogList("⬇️ Import MicroPython module",
+        "Select an available MicroPython module to import:",
+        itemsConf,
+        function (value) {
+            wsSendCmd("IMPORT-MODULE", value);
+        });
 }
 
 function setEsptoolPage(ver) {
@@ -1559,12 +1578,12 @@ function setEsptoolPage(ver) {
 }
 
 function sizeToText(size, unity) {
-    if (size >= 1024*1024*1024)
-        return Math.round(size/1024/1024/1024*100)/100 + " G" + unity[0];
-    if (size >= 1024*1024)
-        return Math.round(size/1024/1024*100)/100 + " M" + unity[0];
+    if (size >= 1024 * 1024 * 1024)
+        return Math.round(size / 1024 / 1024 / 1024 * 100) / 100 + " G" + unity[0];
+    if (size >= 1024 * 1024)
+        return Math.round(size / 1024 / 1024 * 100) / 100 + " M" + unity[0];
     if (size >= 1024)
-        return Math.round(size/1024*100)/100 + " K" + unity[0];
+        return Math.round(size / 1024 * 100) / 100 + " K" + unity[0];
     return size + " " + unity;
 }
 
@@ -1588,45 +1607,50 @@ function setSDCardConf(conf) {
 }
 
 function setDeviceInfo(info) {
-    getElmById("device-mcu").innerText    = info["deviceMCU"];
+    getElmById("device-mcu").innerText = info["deviceMCU"];
     getElmById("device-module").innerText = "On " + info["deviceModule"];
     show("device-info");
 }
 
 function setAutoInfo(info) {
     var memAlloc = info["mem"]["alloc"];
-    var memFree  = info["mem"]["free"];
+    var memFree = info["mem"]["free"];
     var memTotal = memAlloc + memFree;
-    var unity    = "Bytes";
-    var text     = "RAM     " + sizeToText(memAlloc, unity) + " / " + sizeToText(memTotal, unity);
-    var percent  = Math.round(memAlloc*100/memTotal);
+    var unity = "Bytes";
+    var text = "RAM     " + sizeToText(memAlloc, unity) + " / " + sizeToText(memTotal, unity);
+    var percent = Math.round(memAlloc * 100 / memTotal);
     var progress = getElmById("mem-progress");
     getSubElm(progress, "progress-little-inner").style.width = percent + "%";
-    getSubElm(progress, "progress-little-text").innerText    = text;
+    getSubElm(progress, "progress-little-text").innerText = text;
     if (info["temp"]) {
-        var tempF    = info["temp"]["fahrenheit"];
-        var tempC    = info["temp"]["celsius"];
-        var text     = "TEMP    " + tempC + "°C (" + tempF + "°F)";
+        var tempF = info["temp"]["fahrenheit"];
+        var tempC = info["temp"]["celsius"];
+        var text = "TEMP    " + tempC + "°C (" + tempF + "°F)";
     }
     else {
-        var tempC    = 0;
-        var text     = "TEMP    " + "N/A on your device";
+        var tempC = 0;
+        var text = "TEMP    " + "N/A on your device";
     }
     var progress = getElmById("temp-progress");
     getSubElm(progress, "progress-little-inner").style.width = tempC + "%";
-    getSubElm(progress, "progress-little-text").innerText    = text;
-    var uptime   = info["uptime"];
-    var text     = "UPTIME  " + uptime + " minute" + (uptime > 1 ? "s" : "");
+    getSubElm(progress, "progress-little-text").innerText = text;
+    var uptime = info["uptime"];
+    var text = "UPTIME  " + uptime + " minute" + (uptime > 1 ? "s" : "");
     var progress = getElmById("uptime-progress");
     getSubElm(progress, "progress-little-inner").style.width = "0";
-    getSubElm(progress, "progress-little-text").innerText    = text;
+    getSubElm(progress, "progress-little-text").innerText = text;
+    var lbl = getElmById("label-connection");
+    lbl.innerText = "DEVICE CONNECTED";
+    lbl.style.backgroundColor = "#27AE60";
+    lbl.style.color = "#FFFFFF";
+    lbl.style.fontWeight = "900";
     show("panel-connection");
 }
 
 function wantCloseSoftware() {
-    var count            = 0;
+    var count = 0;
     var modifiedTabNames = "";
-    var ctnr             = getElmById("tabs-code-container");
+    var ctnr = getElmById("tabs-code-container");
     for (var i = 0; i < ctnr.children.length; i++) {
         var tabElm = ctnr.children[i];
         if (isTabCodeModified(tabElm)) {
@@ -1636,14 +1660,14 @@ function wantCloseSoftware() {
         }
     }
     if (count)
-        boxDialogYesNo( "⚠️ NOT SAVED...",
-                        "Are you really sure you want to quit without saving?\n"
-                        + "The following " + (count > 1 ? count + " files are" : "file is") + " modified but not saved:\n\n"
-                        + modifiedTabNames,
-                        function(yes) {
-                            if (yes)
-                                wsSendCmd("CLOSE-SOFTWARE", null);
-                        } );
+        boxDialogYesNo("⚠️ NOT SAVED...",
+            "Are you really sure you want to quit without saving?\n"
+            + "The following " + (count > 1 ? count + " files are" : "file is") + " modified but not saved:\n\n"
+            + modifiedTabNames,
+            function (yes) {
+                if (yes)
+                    wsSendCmd("CLOSE-SOFTWARE", null);
+            });
     else
         wsSendCmd("CLOSE-SOFTWARE", null);
 }
@@ -1709,12 +1733,12 @@ function btnSDCardClick(e) {
 
 function btnHardResetClick(e) {
     if (connectionState)
-        boxDialogYesNo( "⚠️ RESET?",
-                        "Are you sure you want to hard reset the device?",
-                        function(yes) {
-                            if (yes)
-                                wsSendCmd("RESET", null);
-                        } );
+        boxDialogYesNo("⚠️ RESET?",
+            "Are you sure you want to hard reset the device?",
+            function (yes) {
+                if (yes)
+                    wsSendCmd("RESET", null);
+            });
     else
         showError("The device must be connected first.");
 }
@@ -1734,35 +1758,35 @@ function btnWiFiSTAClick(e) {
 
 function btnWiFiAPClick(e) {
     if (connectionState) {
-        getElmById("elm-AP-ssid").value       = "";
-        getElmById("elm-AP-auth").value       = "";
-        getElmById("elm-AP-key").value        = "";
+        getElmById("elm-AP-ssid").value = "";
+        getElmById("elm-AP-auth").value = "";
+        getElmById("elm-AP-key").value = "";
         getElmById("elm-AP-maxclients").value = "3";
         hide("elm-AP-key-container");
-        boxDialogGeneric( "📡 Wireless access point setup",
-                          "Configure the device's Wi-Fi access point:",
-                          "elm-AP-setup",
-                          function() {
-                              ssid   = getElmById("elm-AP-ssid").value.trim();
-                              auth   = getElmById("elm-AP-auth").value;
-                              key    = (auth != "" ? getElmById("elm-AP-key").value : null);
-                              maxcli = parseInt(getElmById("elm-AP-maxclients").value.trim());
-                              if (ssid.length == 0)
-                                  showError("The network name (SSID) cannot be empty.");
-                              else if (auth != "" && key.length < 8)
-                                  showError("The length of the key is too short.");
-                              else if (isNaN(maxcli) || maxcli < 0 || maxcli > 10)
-                                  showError("The maximum number of client connections is incorrect.");
-                              else {
-                                  keepConfig.AP = {
-                                        ssid:   ssid,
-                                        auth:   auth,
-                                        key:    key,
-                                        maxcli: maxcli
-                                  }
-                                  wsSendCmd("WIFI-OPEN-AP", keepConfig.AP);
-                              }
-                          } );
+        boxDialogGeneric("📡 Wireless access point setup",
+            "Configure the device's Wi-Fi access point:",
+            "elm-AP-setup",
+            function () {
+                ssid = getElmById("elm-AP-ssid").value.trim();
+                auth = getElmById("elm-AP-auth").value;
+                key = (auth != "" ? getElmById("elm-AP-key").value : null);
+                maxcli = parseInt(getElmById("elm-AP-maxclients").value.trim());
+                if (ssid.length == 0)
+                    showError("The network name (SSID) cannot be empty.");
+                else if (auth != "" && key.length < 8)
+                    showError("The length of the key is too short.");
+                else if (isNaN(maxcli) || maxcli < 0 || maxcli > 10)
+                    showError("The maximum number of client connections is incorrect.");
+                else {
+                    keepConfig.AP = {
+                        ssid: ssid,
+                        auth: auth,
+                        key: key,
+                        maxcli: maxcli
+                    }
+                    wsSendCmd("WIFI-OPEN-AP", keepConfig.AP);
+                }
+            });
         getElmById("elm-AP-ssid").focus();
     }
     else
@@ -1787,55 +1811,55 @@ function showAPClientsAddrClick(e) {
 function initETHDriverClick(e) {
     if (connectionState) {
         getElmById("elm-ETH-init-driver").value = "";
-        getElmById("elm-ETH-init-addr"  ).value = "00";
-        var mdcElm      = getElmById("elm-ETH-init-mdc");
-        var mdioElm     = getElmById("elm-ETH-init-mdio");
-        var powerElm    = getElmById("elm-ETH-init-power");
+        getElmById("elm-ETH-init-addr").value = "00";
+        var mdcElm = getElmById("elm-ETH-init-mdc");
+        var mdioElm = getElmById("elm-ETH-init-mdio");
+        var powerElm = getElmById("elm-ETH-init-power");
         var selElements = [mdcElm, mdioElm, powerElm];
         var optElm;
         for (var i in selElements) {
             rmElmChildren(selElements[i].id);
-            optElm       = newElm("option", null, null);
+            optElm = newElm("option", null, null);
             optElm.value = "";
-            optElm.text  = (selElements[i] == powerElm ? "Not used" : "-- Choose a GPIO --");
+            optElm.text = (selElements[i] == powerElm ? "Not used" : "-- Choose a GPIO --");
             selElements[i].appendChild(optElm);
             for (var pin in pinsList) {
-                    optElm       = newElm("option", null, null);
-                    optElm.value = pin;
-                    optElm.text  = "GPIO-" + pin;
-                    selElements[i].appendChild(optElm);
+                optElm = newElm("option", null, null);
+                optElm.value = pin;
+                optElm.text = "GPIO-" + pin;
+                selElements[i].appendChild(optElm);
             }
         }
-        boxDialogGeneric( "🏗 Ethernet PHY initialization",
-                          "You must configure the driver of the chipset:",
-                          "elm-ETH-init",
-                          function() {
-                              var driver = getElmById("elm-ETH-init-driver").value;
-                              var addr   = parseInt(getElmById("elm-ETH-init-addr").value.trim(), 16);
-                              var mdc    = parseInt(getElmById("elm-ETH-init-mdc").value);
-                              var mdio   = parseInt(getElmById("elm-ETH-init-mdio").value);
-                              var power  = parseInt(getElmById("elm-ETH-init-power").value);
-                              if (isNaN(power))
-                                  power = null;
-                              if (driver == "")
-                                  showError("You must choose a chipset.");
-                              else if (isNaN(addr) || addr < 0 || addr > 0x1F)
-                                  showError("The PHY address is incorrect.");
-                              else if (isNaN(mdc))
-                                  showError("You must choose a mdc GPIO.");
-                              else if (isNaN(mdio))
-                                  showError("You must choose a mdio GPIO.");
-                              else {
-                                   keepConfig.ETH = {
-                                        driver: driver,
-                                        addr:   addr,
-                                        mdc:    mdc,
-                                        mdio:   mdio,
-                                        power:  power
-                                   }
-                                   wsSendCmd("INIT_ETH_DRIVER", keepConfig.ETH);
-                              }
-                          } );
+        boxDialogGeneric("🏗 Ethernet PHY initialization",
+            "You must configure the driver of the chipset:",
+            "elm-ETH-init",
+            function () {
+                var driver = getElmById("elm-ETH-init-driver").value;
+                var addr = parseInt(getElmById("elm-ETH-init-addr").value.trim(), 16);
+                var mdc = parseInt(getElmById("elm-ETH-init-mdc").value);
+                var mdio = parseInt(getElmById("elm-ETH-init-mdio").value);
+                var power = parseInt(getElmById("elm-ETH-init-power").value);
+                if (isNaN(power))
+                    power = null;
+                if (driver == "")
+                    showError("You must choose a chipset.");
+                else if (isNaN(addr) || addr < 0 || addr > 0x1F)
+                    showError("The PHY address is incorrect.");
+                else if (isNaN(mdc))
+                    showError("You must choose a mdc GPIO.");
+                else if (isNaN(mdio))
+                    showError("You must choose a mdio GPIO.");
+                else {
+                    keepConfig.ETH = {
+                        driver: driver,
+                        addr: addr,
+                        mdc: mdc,
+                        mdio: mdio,
+                        power: power
+                    }
+                    wsSendCmd("INIT_ETH_DRIVER", keepConfig.ETH);
+                }
+            });
         getElmById("elm-ETH-init-driver").focus();
     }
     else
@@ -1852,55 +1876,55 @@ function disableInterfaceETHClick(e) {
 
 function keepConfigClick(e, configName) {
     if (configName == "MCU" && keepConfig.MCU)
-        boxDialogYesNo( "💡 Keep system setting?",
-                        "Do you want to keep this system setting in your device\nso that it is set automatically at each boot?",
-                        function(yes) {
-                            if (yes) {
-                                hide("keepMCUConfigBtn");
-                                wsSendCmd("SAVE-MCU-CFG", keepConfig.MCU);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                        } );
+        boxDialogYesNo("💡 Keep system setting?",
+            "Do you want to keep this system setting in your device\nso that it is set automatically at each boot?",
+            function (yes) {
+                if (yes) {
+                    hide("keepMCUConfigBtn");
+                    wsSendCmd("SAVE-MCU-CFG", keepConfig.MCU);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
     else if (configName == "STA" && keepConfig.STA)
-        boxDialogYesNo( "💡 Keep Wi-Fi configuration?",
-                        "Do you want to keep this Wi-Fi configuration in your device\nso that it connects automatically at each boot?",
-                        function(yes) {
-                            if (yes) {
-                                hide("keepSTAConfigBtn");
-                                wsSendCmd("SAVE-WIFI-STA-CFG", keepConfig.STA);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                        } );
+        boxDialogYesNo("💡 Keep Wi-Fi configuration?",
+            "Do you want to keep this Wi-Fi configuration in your device\nso that it connects automatically at each boot?",
+            function (yes) {
+                if (yes) {
+                    hide("keepSTAConfigBtn");
+                    wsSendCmd("SAVE-WIFI-STA-CFG", keepConfig.STA);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
     else if (configName == "AP" && keepConfig.AP)
-        boxDialogYesNo( "💡 Keep Wi-Fi AP configuration?",
-                        "Do you want to keep this Wi-Fi access point configuration in your device\nso that it opens automatically at each boot?",
-                        function(yes) {
-                            if (yes) {
-                                hide("keepAPConfigBtn");
-                                wsSendCmd("SAVE-WIFI-AP-CFG", keepConfig.AP);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                        } );
+        boxDialogYesNo("💡 Keep Wi-Fi AP configuration?",
+            "Do you want to keep this Wi-Fi access point configuration in your device\nso that it opens automatically at each boot?",
+            function (yes) {
+                if (yes) {
+                    hide("keepAPConfigBtn");
+                    wsSendCmd("SAVE-WIFI-AP-CFG", keepConfig.AP);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
     else if (configName == "ETH" && keepConfig.ETH)
-        boxDialogYesNo( "💡 Keep Ethernet configuration?",
-                        "Do you want to keep this Ethernet PHY configuration in your device\nso that it initialises automatically at each boot?",
-                        function(yes) {
-                            if (yes) {
-                                hide("keepETHConfigBtn");
-                                wsSendCmd("SAVE-ETH-CFG", keepConfig.ETH);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                        } );
+        boxDialogYesNo("💡 Keep Ethernet configuration?",
+            "Do you want to keep this Ethernet PHY configuration in your device\nso that it initialises automatically at each boot?",
+            function (yes) {
+                if (yes) {
+                    hide("keepETHConfigBtn");
+                    wsSendCmd("SAVE-ETH-CFG", keepConfig.ETH);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
     else if (configName == "SD" && keepConfig.SD)
-        boxDialogYesNo( "💡 Keep SD card mounted?",
-                        "Do you want to keep the SD card mounted on your device\nto maintain access to the file system at every boot?",
-                        function(yes) {
-                            if (yes) {
-                                hide("keepSDConfigBtn");
-                                wsSendCmd("SAVE-SD-CARD-CFG", keepConfig.SD);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                        } );
+        boxDialogYesNo("💡 Keep SD card mounted?",
+            "Do you want to keep the SD card mounted on your device\nto maintain access to the file system at every boot?",
+            function (yes) {
+                if (yes) {
+                    hide("keepSDConfigBtn");
+                    wsSendCmd("SAVE-SD-CARD-CFG", keepConfig.SD);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
 }
 
 function setPinoutInfoImg(name) {
@@ -1917,32 +1941,32 @@ function initSDCardClick(e) {
 }
 
 function formatSDCardClick(e) {
-    boxDialogYesNo( "⚠️ FORMAT?",
-                    "Are you sure you want to format the SD card that is in the device?\n\n" +
-                    "Be careful: All your files stored on it will be lost!",
-                    function(yes) {
-                        if (yes)
-                            wsSendCmd("SDCARD-FORMAT", null);
-                    } );
+    boxDialogYesNo("⚠️ FORMAT?",
+        "Are you sure you want to format the SD card that is in the device?\n\n" +
+        "Be careful: All your files stored on it will be lost!",
+        function (yes) {
+            if (yes)
+                wsSendCmd("SDCARD-FORMAT", null);
+        });
 }
 
 function mountSDCardClick(e) {
-    boxDialogQuery( "🛠 Mount the SD card:",
-                    "Enter a name to mount the SD card to the device's file system:",
-                    "/sd",
-                    function(name) {
-                        name = name.trim();
-                        if (name != "") {
-                            if (name[0] != "/")
-                                name = "/" + name;
-                            if (name.length > 1 && name.length < 256 && name.split("/").length-1 == 1) {
-                                keepConfig.SD = { mountpt: name };
-                                wsSendCmd("SDCARD-MOUNT", name);
-                            }
-                            else
-                                showError("The name of this mount point is incorrect.");
-                        }
-                    } );
+    boxDialogQuery("🛠 Mount the SD card:",
+        "Enter a name to mount the SD card to the device's file system:",
+        "/sd",
+        function (name) {
+            name = name.trim();
+            if (name != "") {
+                if (name[0] != "/")
+                    name = "/" + name;
+                if (name.length > 1 && name.length < 256 && name.split("/").length - 1 == 1) {
+                    keepConfig.SD = { mountpt: name };
+                    wsSendCmd("SDCARD-MOUNT", name);
+                }
+                else
+                    showError("The name of this mount point is incorrect.");
+            }
+        });
 }
 
 function umountSDCardClick(e) {
@@ -1953,29 +1977,21 @@ function releaseSDCardClick(e) {
     wsSendCmd("SDCARD-RELEASE", null);
 }
 
-function btnSoftInfoEspIdfClick(e)
-{ wsSendCmd("OPEN-URL", "https://github.com/espressif/esp-idf/releases"); }
+function btnSoftInfoEspIdfClick(e) { wsSendCmd("OPEN-URL", "https://github.com/espressif/esp-idf/releases"); }
 
-function btnSoftInfoMPY(e)
-{ wsSendCmd("OPEN-URL", "https://github.com/micropython/micropython/releases"); }
+function btnSoftInfoMPY(e) { wsSendCmd("OPEN-URL", "https://github.com/micropython/micropython/releases"); }
 
-function btnSoftInfoMPYJama(e)
-{ wsSendCmd("OPEN-URL", "https://github.com/jczic/ESP32-MPY-Jama/releases"); }
+function btnSoftInfoMPYJama(e) { wsSendCmd("OPEN-URL", "https://github.com/jczic/ESP32-MPY-Jama/releases"); }
 
-function btnSoftInfoEsptool(e)
-{ wsSendCmd("OPEN-URL", "https://github.com/espressif/esptool/releases"); }
+function btnSoftInfoEsptool(e) { wsSendCmd("OPEN-URL", "https://github.com/espressif/esptool/releases"); }
 
-function btnSoftInfoDevKits(e)
-{ wsSendCmd("OPEN-URL", "https://www.espressif.com/en/products/devkits"); }
+function btnSoftInfoDevKits(e) { wsSendCmd("OPEN-URL", "https://www.espressif.com/en/products/devkits"); }
 
-function btnSoftInfoFirmwares(e)
-{ wsSendCmd("OPEN-URL", "https://micropython.org/download?port=esp32"); }
+function btnSoftInfoFirmwares(e) { wsSendCmd("OPEN-URL", "https://micropython.org/download?port=esp32"); }
 
-function btnSoftInfoESP32Port(e)
-{ wsSendCmd("OPEN-URL", "https://github.com/micropython/micropython/blob/master/ports/esp32/README.md"); }
+function btnSoftInfoESP32Port(e) { wsSendCmd("OPEN-URL", "https://github.com/micropython/micropython/blob/master/ports/esp32/README.md"); }
 
-function btnSoftInfoLibDoc(e)
-{ wsSendCmd("OPEN-URL", "https://docs.micropython.org/en/latest/library"); }
+function btnSoftInfoLibDoc(e) { wsSendCmd("OPEN-URL", "https://docs.micropython.org/en/latest/library"); }
 
 function btnTerminalClick(e) {
     showREPL();
@@ -2022,25 +2038,29 @@ function setConnectionState(connected) {
             writeTextInTerminal("* Device disconnected.\n", "terminal-IndianRed");
         }
     connectionState = connected;
+    var lbl = getElmById("label-connection");
+    lbl.innerText = "DEVICE " + (connected ? "CONNECTED" : "NOT CONNECTED");
+    lbl.style.backgroundColor = connected ? "#27AE60" : "#C0392B";
+    lbl.style.color = "#FFFFFF";
+    lbl.style.fontWeight = "900";
     getElmById("btn-connection").value = (connected ? "Disconnect" : "  Connect") + " device";
-    setTextTag("label-connection", "DEVICE " + (connected ? "CONNECTED" : "NOT CONNECTED"), connected);
     if (!connected) {
         var actPage = getActivePage();
-        if ( actPage && ( actPage.id == "page-networks-info" ||
-                          actPage.id == "page-system-info"   ||
-                          actPage.id == "page-sdcard" ) )
+        if (actPage && (actPage.id == "page-networks-info" ||
+            actPage.id == "page-system-info" ||
+            actPage.id == "page-sdcard"))
             hideElm(actPage)
         setSwitchButton(getElmById("switch-btn-menu"));
         hide("panel-connection");
-        setListDirAndFiles("", { });
+        setListDirAndFiles("", {});
         setCurrentDirLabel(null);
         hide("keepMCUConfigBtn");
         hide("keepSTAConfigBtn");
         hide("keepAPConfigBtn");
         hide("keepETHConfigBtn");
         hide("keepSDConfigBtn");
-        keepConfig = { };
-        }
+        keepConfig = {};
+    }
 }
 
 function setSerialConnection(port) {
@@ -2055,12 +2075,12 @@ function execCode(code, codeFilename) {
             if (processing == PRC_NONE) {
                 processing = PRC_EXEC_CODE;
                 if (code.indexOf("\n") >= 0) {
-                    var encoder         = new TextEncoder();
-                    var typedUTF8Data   = encoder.encode(code);
+                    var encoder = new TextEncoder();
+                    var typedUTF8Data = encoder.encode(code);
                     var contentBytesArr = Array.from(typedUTF8Data);
                     var args = {
-                        "name" : codeFilename,
-                        "size" : contentBytesArr.length
+                        "name": codeFilename,
+                        "size": contentBytesArr.length
                     }
                     wsSendCmd("START-CONTENT-TRANSFER", args);
                     var i = 0;
@@ -2071,10 +2091,10 @@ function execCode(code, codeFilename) {
                 }
                 else {
                     hide("terminal-bar");
-                    wsSendCmd( "EXEC-CODE", {
-                        "code"         : code,
-                        "codeFilename" : codeFilename
-                    } );
+                    wsSendCmd("EXEC-CODE", {
+                        "code": code,
+                        "codeFilename": codeFilename
+                    });
                 }
             }
             else
@@ -2142,20 +2162,21 @@ function btnListFilesRenameClick(e) {
         var elm = getElmById("list-files-selected");
         if (elm != null) {
             var filename = elm["filenameCB"];
-            var srcPath  = browsePath + "/" + filename;
-            boxDialogQuery( "✒️ Rename",
-                            "Enter a new name for <b>" + srcPath + "</b>:",
-                            filename,
-                            function(newName) {
-                                newName = newName.trim();
-                                if (newName != "") {
-                                    var dstPath = browsePath + "/" + newName;
-                                    wsSendCmd( "RENAME-FILE-OR-DIR", {
-                                        "srcPath" : srcPath,
-                                        "dstPath" : dstPath } );
-                                    wsSendCmd("GET-LIST-DIR", browsePath);
-                                }
-                        } );
+            var srcPath = browsePath + "/" + filename;
+            boxDialogQuery("✒️ Rename",
+                "Enter a new name for <b>" + srcPath + "</b>:",
+                filename,
+                function (newName) {
+                    newName = newName.trim();
+                    if (newName != "") {
+                        var dstPath = browsePath + "/" + newName;
+                        wsSendCmd("RENAME-FILE-OR-DIR", {
+                            "srcPath": srcPath,
+                            "dstPath": dstPath
+                        });
+                        wsSendCmd("GET-LIST-DIR", browsePath);
+                    }
+                });
         }
     }
 }
@@ -2165,43 +2186,43 @@ function btnListFilesRemoveClick(e) {
         var elm = getElmById("list-files-selected");
         if (elm != null) {
             var filepath = browsePath + "/" + elm["filenameCB"];
-            boxDialogYesNo( "⚠️ DELETE?",
-                            "Are you sure you want to remove <b>" + filepath + "</b> from your device?",
-                            function(yes) {
-                                if (yes) {
-                                    wsSendCmd("DELETE-FILE-OR-DIR", filepath);
-                                    wsSendCmd("GET-LIST-DIR", browsePath);
-                                }
-                            } );
+            boxDialogYesNo("⚠️ DELETE?",
+                "Are you sure you want to remove <b>" + filepath + "</b> from your device?",
+                function (yes) {
+                    if (yes) {
+                        wsSendCmd("DELETE-FILE-OR-DIR", filepath);
+                        wsSendCmd("GET-LIST-DIR", browsePath);
+                    }
+                });
         }
     }
 }
 
 function btnListFilesNewDirClick(e) {
     if (connectionState && getEventTarget(e).classList.contains("browse-button-actif"))
-        boxDialogQuery( "📂 Create new folder",
-                        "Create a new folder in <b>" + browsePath + "/</b>:",
-                        "",
-                        function(dirName) {
-                            dirName = dirName.trim();
-                            if (dirName != "") {
-                                wsSendCmd("CREATE-DIR", browsePath + "/" + dirName);
-                                wsSendCmd("GET-LIST-DIR", browsePath);
-                            }
-                    } );
+        boxDialogQuery("📂 Create new folder",
+            "Create a new folder in <b>" + browsePath + "/</b>:",
+            "",
+            function (dirName) {
+                dirName = dirName.trim();
+                if (dirName != "") {
+                    wsSendCmd("CREATE-DIR", browsePath + "/" + dirName);
+                    wsSendCmd("GET-LIST-DIR", browsePath);
+                }
+            });
 }
 
 function btnJamaFuncsExecClick(e) {
     if (connectionState) {
         if (processing == PRC_NONE) {
-            var config        = execJamaFuncConfig;
+            var config = execJamaFuncConfig;
             var argsFieldElms = getElmsByClass("exec-jama-funcs-args-field");
-            var count         = 0;
-            var o             = { };
+            var count = 0;
+            var o = {};
             for (var arg in config.args) {
                 var fieldElm = argsFieldElms[count++];
-                var type     = config.args[arg].type;
-                var value    = null;
+                var type = config.args[arg].type;
+                var value = null;
                 if (type == "str")
                     value = fieldElm.value.trim();
                 else if (type == "int") {
@@ -2238,8 +2259,8 @@ function btnJamaFuncsExecClick(e) {
             }
             processing = PRC_EXEC_JAMA;
             wsSendCmd("EXEC-JAMA-FUNC", {
-                "config" : config,
-                "values" : o
+                "config": config,
+                "values": o
             });
         }
         else
@@ -2250,23 +2271,23 @@ function btnJamaFuncsExecClick(e) {
 }
 
 function setActifListFilesButtons() {
-    var f = function(id, actif) {
+    var f = function (id, actif) {
         if (actif)
             getElmById(id).classList.add("browse-button-actif");
         else
             getElmById(id).classList.remove("browse-button-actif");
     }
-    var elm    = getElmById("list-files-selected");
-    var selOk  = (elm != null);
-    var selPY  = (selOk && elm["filenameCB"].toUpperCase().endsWith(".PY"));
+    var elm = getElmById("list-files-selected");
+    var selOk = (elm != null);
+    var selPY = (selOk && elm["filenameCB"].toUpperCase().endsWith(".PY"));
     var selDir = (selOk && elm["filesizeCB"] == null);
-    f("list-files-btn-open",     (connectionState && selPY && !selDir));
-    f("list-files-btn-execute",  (connectionState && selPY && !selDir));
+    f("list-files-btn-open", (connectionState && selPY && !selDir));
+    f("list-files-btn-execute", (connectionState && selPY && !selDir));
     f("list-files-btn-download", (connectionState && selOk && !selDir));
-    f("list-files-btn-upload",   connectionState);
-    f("list-files-btn-rename",   (connectionState && selOk));
-    f("list-files-btn-remove",   (connectionState && selOk));
-    f("list-files-btn-newdir",   connectionState);
+    f("list-files-btn-upload", connectionState);
+    f("list-files-btn-rename", (connectionState && selOk));
+    f("list-files-btn-remove", (connectionState && selOk));
+    f("list-files-btn-newdir", connectionState);
 }
 
 function refreshExecAndStopBtns() {
@@ -2281,7 +2302,7 @@ function refreshExecAndStopBtns() {
     else {
         hide("stop-tiny-btn");
         show("exec-tiny-btn");
-        var btnElm     = getElmById("exec-tiny-btn");
+        var btnElm = getElmById("exec-tiny-btn");
         var selTabData = getElmById("tab-code-selected")["tabData"];
         if (selTabData["codeEditor"]["codeMirror"].getValue())
             btnElm.classList.add("tiny-btn-green");
@@ -2295,10 +2316,10 @@ function connectWS() {
     try {
         var wsUri = "ws://" + window.location.hostname + ':' + window.location.port;
         websocket = new WebSocket(wsUri);
-        websocket.addEventListener('open',    onWSOpen);
-        websocket.addEventListener('close',   onWSClose);
+        websocket.addEventListener('open', onWSOpen);
+        websocket.addEventListener('close', onWSClose);
         websocket.addEventListener('message', onWSMessage);
-        websocket.addEventListener('error',   onWSError);
+        websocket.addEventListener('error', onWSError);
         return true;
     }
     catch (ex) {
@@ -2308,12 +2329,12 @@ function connectWS() {
 }
 
 function refreshTabCodeScrollBtns() {
-    tabsCodeCtnr       = getElmById("tabs-code-container");
+    tabsCodeCtnr = getElmById("tabs-code-container");
     tabsCodeCtnrScroll = getElmById("tabs-code-container-scroll");
-    if ( ( tabsCodeCtnr.scrollWidth > tabsCodeCtnrScroll.offsetWidth &&
-           tabsCodeCtnrScroll.classList.contains("tabs-code-container-scroll-hide-btns") ) ||
-         ( tabsCodeCtnr.scrollWidth <= tabsCodeCtnrScroll.offsetWidth &&
-           tabsCodeCtnrScroll.classList.contains("tabs-code-container-scroll-show-btns") ) )
+    if ((tabsCodeCtnr.scrollWidth > tabsCodeCtnrScroll.offsetWidth &&
+        tabsCodeCtnrScroll.classList.contains("tabs-code-container-scroll-hide-btns")) ||
+        (tabsCodeCtnr.scrollWidth <= tabsCodeCtnrScroll.offsetWidth &&
+            tabsCodeCtnrScroll.classList.contains("tabs-code-container-scroll-show-btns")))
         classToggle(tabsCodeCtnrScroll, "tabs-code-container-scroll-hide-btns", "tabs-code-container-scroll-show-btns");
 }
 
@@ -2324,11 +2345,11 @@ function timerAppSecond() {
 
 function getLatestVersions() {
 
-    var setVer = function(elmId, owner, repo) {
+    var setVer = function (elmId, owner, repo) {
         try {
             var elm = getElmById(elmId);
             var req = new XMLHttpRequest();
-            req.onload = function() {
+            req.onload = function () {
                 var lastVer;
                 try {
                     lastVer = JSON.parse(this.responseText).tag_name;
@@ -2340,39 +2361,39 @@ function getLatestVersions() {
                 elm.innerText = lastVer;
             }
             elm.innerText = '...';
-            req.open("get", "https://api.github.com/repos/"+owner+"/"+repo+"/releases/latest", true);
+            req.open("get", "https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest", true);
             req.send();
         } catch (ex) { }
     }
 
-    setVer( "label-softver-espidf",  "espressif",   "esp-idf"        );
-    setVer( "label-softver-mpy",     "micropython", "micropython"    );
-    setVer( "label-softver-mpyjama", "jczic",       "ESP32-MPY-Jama" );
-    setVer( "label-softver-esptool", "espressif",   "esptool"        );
+    setVer("label-softver-espidf", "espressif", "esp-idf");
+    setVer("label-softver-mpy", "micropython", "micropython");
+    setVer("label-softver-mpyjama", "jczic", "ESP32-MPY-Jama");
+    setVer("label-softver-esptool", "espressif", "esptool");
 
 }
 
 function checkUpdate() {
     try {
         var req = new XMLHttpRequest();
-        req.onload = function() {
+        req.onload = function () {
             try {
                 var lastVer = JSON.parse(this.responseText).tag_name;
                 if (lastVer != undefined) {
                     var lastV = lastVer.substring(1).split(".");
-                    var appV  = appVer.split(".");
+                    var appV = appVer.split(".");
                     if (lastV.length == appV.length)
                         for (var i in lastV)
                             if (lastV[i] == appV[i])
                                 continue;
                             else {
                                 if (lastV[i] > appV[i])
-                                    boxDialogYesNo( "🚀 Update?",
-                                                    "A new version (" + lastVer + ") is available!\nDo you want to download it?",
-                                                    function(yes) {
-                                                        if (yes)
-                                                            wsSendCmd("OPEN-URL", GITHUB_REPOSITORY_URL);
-                                                    } );
+                                    boxDialogYesNo("🚀 Update?",
+                                        "A new version (" + lastVer + ") is available!\nDo you want to download it?",
+                                        function (yes) {
+                                            if (yes)
+                                                wsSendCmd("OPEN-URL", GITHUB_REPOSITORY_URL);
+                                        });
                                 break;
                             }
                 }
@@ -2383,53 +2404,53 @@ function checkUpdate() {
     } catch (ex) { }
 }
 
-window.addEventListener( "resize", function() {
+window.addEventListener("resize", function () {
     refreshTabCodeScrollBtns();
-} );
+});
 
-window.addEventListener( "load", function() {
+window.addEventListener("load", function () {
 
     if (!connectWS())
         return;
 
-    codeMirrorTerm = CodeMirror( getElmById("terminal-repl"), {
-        mode              : null,
-        theme             : "repl",
-        readOnly          : true,
-        lineNumbers       : false,
-        matchBrackets     : false,
-        openDialog        : false,
-        searchCursor      : false,
-        search            : false,
-        lineWrapping      : true
-    } );
+    codeMirrorTerm = CodeMirror(getElmById("terminal-repl"), {
+        mode: null,
+        theme: "repl",
+        readOnly: true,
+        lineNumbers: false,
+        matchBrackets: false,
+        openDialog: false,
+        searchCursor: false,
+        search: false,
+        lineWrapping: true
+    });
     codeMirrorTerm.setSize("100%", "fit-content");
 
-    codeMirrorJamaTerm = CodeMirror( getElmById("jama-func-terminal"), {
-        mode              : null,
-        theme             : "repl",
-        readOnly          : true,
-        lineNumbers       : false,
-        matchBrackets     : false,
-        openDialog        : false,
-        searchCursor      : false,
-        search            : false,
-        lineWrapping      : true
-    } );
+    codeMirrorJamaTerm = CodeMirror(getElmById("jama-func-terminal"), {
+        mode: null,
+        theme: "repl",
+        readOnly: true,
+        lineNumbers: false,
+        matchBrackets: false,
+        openDialog: false,
+        searchCursor: false,
+        search: false,
+        lineWrapping: true
+    });
     codeMirrorJamaTerm.setSize("100%", "fit-content");
 
     var selElm = getElmById("elm-list-pinout-info");
     for (var i in pinoutModels) {
-        var optElm   = newElm("option", null, null);
+        var optElm = newElm("option", null, null);
         optElm.value = pinoutModels[i];
-        optElm.text  = pinoutModels[i];
+        optElm.text = pinoutModels[i];
         selElm.appendChild(optElm);
     }
 
     setConnectionState(null);
     setSwitchButton(getElmById("switch-btn-menu"));
 
-    this.document.body.addEventListener("keydown", function(e) {
+    this.document.body.addEventListener("keydown", function (e) {
         if (e.key == "Escape") {
             hideExistingBoxesDialog();
             e.preventDefault();
@@ -2440,39 +2461,39 @@ window.addEventListener( "load", function() {
         }
         else if (e.key == "Tab")
             e.preventDefault();
-    } );
-    
-    this.document.body.addEventListener("keypress", function(e) {
+    });
+
+    this.document.body.addEventListener("keypress", function (e) {
         if (e.metaKey) {
             var k = e.key.toUpperCase();
             if (k == "A" || k == "Z" || k == "Q")
                 e.preventDefault();
         }
-    } );
+    });
 
-    getElmById("menubar-logo").addEventListener("click", function(e) {
+    getElmById("menubar-logo").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("OPEN-URL", GITHUB_REPOSITORY_URL);
-    } );
+    });
 
-    getElmById("JCzic").addEventListener("click", function(e) {
+    getElmById("JCzic").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("OPEN-URL", "https://soundcloud.com/jczic/sets/electro-pulse");
-    } );
+    });
 
-    getElmById("code-editors").addEventListener("keypress", function(e) {
+    getElmById("code-editors").addEventListener("keypress", function (e) {
         if ((e.metaKey || e.ctrlKey) && e.key.toUpperCase() == "S") {
             e.preventDefault();
             var selTab = getElmById("tab-code-selected");
             saveTabCode(selTab, false);
         }
-    } );
+    });
 
-    getElmById("terminal-input-cmd").addEventListener("keypress", function(e) {
+    getElmById("terminal-input-cmd").addEventListener("keypress", function (e) {
         if (e.key === 13 || e.key.toUpperCase() === "ENTER")
             if (connectionState) {
-                var input   = getElmById("terminal-input-cmd");
-                var code    = input.value.trim();
+                var input = getElmById("terminal-input-cmd");
+                var code = input.value.trim();
                 input.value = "";
                 writeTextInTerminal("MicroPython >>> " + code + "\n\n", "terminal-LightSteelBlue");
                 if (code.length > 0) {
@@ -2480,16 +2501,16 @@ window.addEventListener( "load", function() {
                     cmdHistory.push(code);
                     cmdHistoryNav = cmdHistory.slice();
                     cmdHistoryNav.push("");
-                    cmdHistoryIdx = cmdHistoryNav.length-1;
+                    cmdHistoryIdx = cmdHistoryNav.length - 1;
                     execCode(code, null);
                 }
             }
             else
                 showError("The device must be connected first.");
-    } );
+    });
 
-    getElmById("terminal-input-cmd").addEventListener("keydown", function(e) {
-        var f = function(idxStep) {
+    getElmById("terminal-input-cmd").addEventListener("keydown", function (e) {
+        var f = function (idxStep) {
             var input = getElmById("terminal-input-cmd");
             cmdHistoryNav[cmdHistoryIdx] = input.value;
             cmdHistoryIdx += idxStep;
@@ -2500,156 +2521,162 @@ window.addEventListener( "load", function() {
             if (cmdHistoryIdx > 0)
                 f(-1);
         if (e.key.toUpperCase() == "ARROWDOWN")
-            if (cmdHistoryIdx < cmdHistoryNav.length-1)
+            if (cmdHistoryIdx < cmdHistoryNav.length - 1)
                 f(1);
-    } );
-    
-    getElmById("jama-func-stop-btn").addEventListener("click", function(e) {
+    });
+
+    getElmById("jama-func-stop-btn").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("EXEC-CODE-STOP", null);
-    } );
+    });
 
-    getElmById("new-tiny-btn").addEventListener("click", function(e) {
+    getElmById("new-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         createTabCode(null, "");
-    } );
+    });
 
-    getElmById("save-tiny-btn").addEventListener("click", function(e) {
+    getElmById("save-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         var tabElm = getElmById("tab-code-selected");
         saveTabCode(tabElm, false);
-    } );
+    });
 
-    getElmById("exec-tiny-btn").addEventListener("click", function(e) {
+    getElmById("exec-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         var selTabData = getElmById("tab-code-selected")["tabData"];
-        var codeName   = selTabData["codeName"];
-        var code       = selTabData["codeEditor"]["codeMirror"].getValue();
+        var codeName = selTabData["codeName"];
+        var code = selTabData["codeEditor"]["codeMirror"].getValue();
         execCode(code, codeName);
-    } );
+    });
 
-    getElmById("stop-tiny-btn").addEventListener("click", function(e) {
+    getElmById("stop-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("EXEC-CODE-STOP", null);
-    } );
+    });
 
-    getElmById("undo-tiny-btn").addEventListener("click", function(e) {
+    getElmById("undo-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         var selTabData = getElmById("tab-code-selected")["tabData"];
         selTabData["codeEditor"]["codeMirror"].undo();
-    } );
+    });
 
-    getElmById("redo-tiny-btn").addEventListener("click", function(e) {
+    getElmById("redo-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         var selTabData = getElmById("tab-code-selected")["tabData"];
         selTabData["codeEditor"]["codeMirror"].redo();
-    } );
+    });
 
-    getElmById("search-tiny-btn").addEventListener("click", function(e) {
+    getElmById("search-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         var selTabData = getElmById("tab-code-selected")["tabData"];
         selTabData["codeEditor"]["codeMirror"].execCommand('find');
-    } );
-    
-    getElmById("modules-tiny-btn").addEventListener("click", function(e) {
+    });
+
+    getElmById("modules-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("GET-MODULES", null);
-    } );
+    });
 
-    getElmById("packages-tiny-btn").addEventListener("click", function(e) {
+    getElmById("packages-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         if (connectionState) {
-            boxDialogQuery( "📦 Install package",
-                            "Enter the package name to install it with your packages manager:\n(depending on your MicroPython installation <b>MIP</b> or <b>PyPI</b>)",
-                            "",
-                            function(name) {
-                                name = name.trim();
-                                if (name != "") {
-                                    writeTextInTerminal("Installation of '" + name + "' package:\n", "terminal-LightSkyBlue");
-                                    wsSendCmd("INSTALL-PACKAGE", name);
-                                    wsSendCmd("GET-LIST-DIR", browsePath);
-                                }
-                            } );
+            boxDialogQuery("📦 Install package",
+                "Enter the package name to install it with your packages manager:\n(depending on your MicroPython installation <b>MIP</b> or <b>PyPI</b>)",
+                "",
+                function (name) {
+                    name = name.trim();
+                    if (name != "") {
+                        writeTextInTerminal("Installation of '" + name + "' package:\n", "terminal-LightSkyBlue");
+                        wsSendCmd("INSTALL-PACKAGE", name);
+                        wsSendCmd("GET-LIST-DIR", browsePath);
+                    }
+                });
         }
         else
             showError("The device must be connected first.");
-    } );
+    });
 
-    getElmById("gpio-tiny-btn").addEventListener("click", function(e) {
+    getElmById("gpio-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
         showGPIOInfos();
-    } );
+    });
 
-    getElmById("tabs-code-container").addEventListener("dblclick", function(e) {
+    getElmById("tabs-code-container").addEventListener("dblclick", function (e) {
         e.preventDefault();
         createTabCode(null, "");
-    } );
+    });
 
-    getElmById("tabs-code-container-scroll-btn-left").addEventListener("click", function(e) {
+    getElmById("tabs-code-container-scroll-btn-left").addEventListener("click", function (e) {
         e.preventDefault();
         getElmById("tabs-code-container-scroll").scrollLeft -= 80;
-    } );
+    });
 
-    getElmById("tabs-code-container-scroll-btn-right").addEventListener("click", function(e) {
+    getElmById("tabs-code-container-scroll-btn-right").addEventListener("click", function (e) {
         e.preventDefault();
         getElmById("tabs-code-container-scroll").scrollLeft += 80;
-    } );
+    });
 
-    getElmById("exec-code-stop-btn").addEventListener("click", function(e) {
+    getElmById("exec-code-stop-btn").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("EXEC-CODE-STOP", null);
-    } );
+    });
 
-    getElmById("change-freq").addEventListener("click", function(e) {
+    getElmById("change-freq").addEventListener("click", function (e) {
         e.preventDefault();
-        var picto     = "list-item-picto-freq";
-        var itemsConf = [ { "Value"  : 80,
-                            "Picto1" : picto,
-                            "Text"   : "80 MHz",
-                            "Picto2" : null },
-                          { "Value"  : 160,
-                            "Picto1" : picto,
-                            "Text"   : "160 MHz",
-                            "Picto2" : null },
-                          { "Value"  : 240,
-                            "Picto1" : picto,
-                            "Text"   : "240 MHz",
-                            "Picto2" : null }
+        var picto = "list-item-picto-freq";
+        var itemsConf = [{
+            "Value": 80,
+            "Picto1": picto,
+            "Text": "80 MHz",
+            "Picto2": null
+        },
+        {
+            "Value": 160,
+            "Picto1": picto,
+            "Text": "160 MHz",
+            "Picto2": null
+        },
+        {
+            "Value": 240,
+            "Picto1": picto,
+            "Text": "240 MHz",
+            "Picto2": null
+        }
         ];
-        boxDialogList( "📈 MCU frequency",
-        "Choose a frequency to set on your ESP32:",
-        itemsConf,
-        function(value) {
-            if (connectionState) {
-                keepConfig.MCU = { freq: value };
-                wsSendCmd("SET-MCU-FREQ", value);
-            }
-            else
-                showError("The device must be connected first.");
-        } );
-    } );
+        boxDialogList("📈 MCU frequency",
+            "Choose a frequency to set on your ESP32:",
+            itemsConf,
+            function (value) {
+                if (connectionState) {
+                    keepConfig.MCU = { freq: value };
+                    wsSendCmd("SET-MCU-FREQ", value);
+                }
+                else
+                    showError("The device must be connected first.");
+            });
+    });
 
-    getElmById("openweb-esptool-installation").addEventListener("click", function(e) {
+    getElmById("openweb-esptool-installation").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("OPEN-URL", "https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html");
-    } );
+    });
 
-    getElmById("openweb-esptool-commands").addEventListener("click", function(e) {
+    getElmById("openweb-esptool-commands").addEventListener("click", function (e) {
         e.preventDefault();
         wsSendCmd("OPEN-URL", "https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html");
-    } );
-    
+    });
+
     createTabCode(null, "");
 
     getLatestVersions();
 
-    var f = function() {
-        setTimeout( function() {
+    var f = function () {
+        setTimeout(function () {
             timerAppSecond();
             f();
         },
-        1000 );
+            1000);
     }
     f();
 
-} );
+});

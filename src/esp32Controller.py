@@ -172,32 +172,59 @@ class ESP32Controller :
         self._threadReadingEvent = Event()
 
         try :
+            # Use a finite timeout instead of None to avoid blocking forever at the OS level
             self._repl = Serial( port      = devicePort,
                                  baudrate  = baudrate,
-                                 timeout   = None,
-                                 rtscts    = 0,
-                                 dsrdtr    = 0,
-                                 xonxoff   = False,
-                                 exclusive = True )
+                                 timeout   = 1.0,
+                                 rtscts    = False,
+                                 dsrdtr    = False,
+                                 exclusive = True ) 
+            
+            # Discovery: On this environment/board, both DTR and RTS must be True
+            # to allow communication and avoid reset loops.
+            self._repl.dtr = True
+            self._repl.rts = True
             self._isConnected = True
-        except :
-            raise ESP32ControllerException('Cannot open serial port "%s".' % devicePort)
+        except Exception as e:
+            raise ESP32ControllerException(f'Cannot open serial port "{devicePort}": {e}')
         
         if onConnProgress :
             onConnProgress()
 
         try :
-            self.InterruptProgram()
-            self._repl.rts = 0
-            self._repl.dtr = 0
+            print("DEBUG - Waiting for board to stabilize (2s)...")
+            sleep(2.0)
+            
+            # Flush any boot messages
+            self._repl.reset_input_buffer()
+            
+            print("DEBUG - Sending break / interrupts...")
+            # Send several Ctrl-C to break out of any running script
+            for _ in range(5):
+                with self._lockWrite :
+                    self._repl.write(b'\x03')
+                    self._repl.flush()
+                sleep(0.1)
+                
+            print("DEBUG - Attempting Raw Mode switch...")
             self._switchToRawMode(timeoutSec=connectTimeoutSec)
+            
             machineNfo          = self._exeCodeREPL('import uos; [x.strip() for x in uos.uname().machine.split("with")]')
             self._machineModule = (machineNfo[0] if len(machineNfo) >= 1 else '')
             self._machineMCU    = (machineNfo[1] if len(machineNfo) >= 2 else '')
+            print(f"DEBUG - Connected! Machine: {machineNfo}")
             self._ensureJamaObjExists()
         except ESP32ControllerSerialConnException :
             raise
-        except :
+        except Exception as ex :
+            print(f"DEBUG - Patient connection failed: {ex}")
+            # Try to read all and print for debug
+            try:
+                data = self._repl.read_all()
+                if data:
+                    print(f"DEBUG - Final buffer content: {data}")
+            except:
+                pass
             raise ESP32ControllerException('The device on the "%s" port is not compatible.' % devicePort)
             
         self._onSerialConnError = onSerialConnError

@@ -1,0 +1,144 @@
+/* Professional Monokai Python Theme for ESP32 MPY-Jama */
+
+.cm-s-monokai.CodeMirror {
+    background: #272822;
+    color: #F8F8F2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cm-s-monokai div.CodeMirror-selected {
+    background: #49483E;
+}
+
+.cm-s-monokai .CodeMirror-line::selection,
+.cm-s-monokai .CodeMirror-line>span::selection,
+.cm-s-monokai .CodeMirror-line>span>span::selection {
+    background: rgba(73, 72, 62, 0.99);
+}
+
+.cm-s-monokai .CodeMirror-gutters {
+    background: #272822;
+    border-right: 1px solid #3E3D32;
+}
+
+.cm-s-monokai .CodeMirror-linenumber {
+    color: #90908A;
+    font-size: 11px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.cm-s-monokai .CodeMirror-cursor {
+    border-left: 2px solid #F8F8F0;
+}
+
+/* Syntax Highlighting - Python Convention */
+
+/* Comments - Softer grey */
+.cm-s-monokai span.cm-comment {
+    color: #75715E;
+    font-style: italic;
+}
+
+/* Keywords - Switching from Pink to a professional Cyan/Blue */
+.cm-s-monokai span.cm-keyword {
+    color: #66D9EF;
+    font-weight: bold;
+}
+
+/* Built-ins (print, len, etc.) - Soft Cyan */
+.cm-s-monokai span.cm-builtin {
+    color: #66D9EF;
+}
+
+/* Strings - Warm Yellow */
+.cm-s-monokai span.cm-string {
+    color: #E6DB74;
+}
+
+/* Numbers and Atoms - Soft Purple */
+.cm-s-monokai span.cm-number,
+.cm-s-monokai span.cm-atom {
+    color: #AE81FF;
+}
+
+/* Definitions (def function(), class Object) - Vibrant Green */
+.cm-s-monokai span.cm-def {
+    color: #A6E22E;
+}
+
+/* Variables (Top level / Global) - White/Off-white */
+.cm-s-monokai span.cm-variable {
+    color: #F8F8F2;
+}
+
+/* Variables-2 (Local variables, parameters) - Distinct Orange */
+.cm-s-monokai span.cm-variable-2 {
+    color: #FD971F;
+}
+
+/* Variables-3 (Properties/Members) - Soft Blue */
+.cm-s-monokai span.cm-variable-3,
+.cm-s-monokai span.cm-property {
+    color: #66D9EF;
+}
+
+/* Brackets & Operators - White */
+.cm-s-monokai span.cm-bracket,
+.cm-s-monokai span.cm-operator {
+    color: #F8F8F2;
+}
+
+/* Tags/Attributes - Soft Green */
+.cm-s-monokai span.cm-tag,
+.cm-s-monokai span.cm-attribute {
+    color: #A6E22E;
+}
+
+.cm-s-monokai .CodeMirror-activeline-background {
+    background: #3E3D32;
+}
+
+.cm-s-monokai .CodeMirror-matchingbracket {
+    outline: 1px solid #75715E;
+    color: #F8F8F2 !important;
+}
+
+/* Match Highlighter Styling */
+.cm-matchhighlight {
+    background-color: rgba(102, 217, 239, 0.3) !important;
+    border-bottom: 2px solid #66D9EF;
+    border-radius: 2px;
+}
+
+/* Autocomplete Hints Styling (Monokai Pro) */
+.CodeMirror-hints {
+    z-index: 999999 !important;
+    background: #2D2A2E !important;
+    border: 1px solid #727072 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+    padding: 4px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.CodeMirror-hint {
+    color: #FCFCFA !important;
+    padding: 4px 10px !important;
+    border-radius: 2px !important;
+    font-size: 12px !important;
+}
+
+li.CodeMirror-hint-active {
+    background: #403E41 !important;
+    color: #FFD866 !important;
+    font-weight: bold !important;
+}
+
+/* Scrollbar Style */
+.cm-s-monokai .CodeMirror-scrollbar-filler,
+.cm-s-monokai .CodeMirror-gutter-filler {
+    background: none;
+}

@@ -58,10 +58,10 @@
     color: #E6DB74;
 }
 
-/* Numbers and Atoms - Soft Purple */
+/* Numbers and Atoms - Vibrant Orange */
 .cm-s-monokai span.cm-number,
 .cm-s-monokai span.cm-atom {
-    color: #AE81FF;
+    color: #F2B279;
 }
 
 /* Definitions (def function(), class Object) - Vibrant Green */

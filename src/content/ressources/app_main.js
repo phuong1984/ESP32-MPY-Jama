@@ -2026,12 +2026,12 @@ function btnSwitchClick(e) {
 function setConnectionState(connected) {
     if (connected == null) {
         connected = false
-        writeTextInTerminal("\nWelcome to ESP32 MicroPython REPL terminal.\n\n", "terminal-SeaGreen");
+        writeTextInTerminal("\nWelcome to ESP32 MicroPython REPL terminal.\n\n", "terminal-VibrantGreen");
     }
     else
         if (connected) {
             hideExistingBoxesDialog();
-            writeTextInTerminal("* Device connected.\n\n", "terminal-SeaGreen");
+            writeTextInTerminal("* Device connected.\n\n", "terminal-VibrantGreen");
         }
         else {
             hide("device-info");
@@ -2408,6 +2408,53 @@ window.addEventListener("resize", function () {
     refreshTabCodeScrollBtns();
 });
 
+function initTerminalResizer() {
+    var splitter = getElmById("terminal-splitter");
+    var terminal = getElmById("terminal-container");
+    var ideCode = getElmById("ide-code");
+    var isResizing = false;
+
+    splitter.addEventListener("mousedown", function (e) {
+        isResizing = true;
+        document.body.style.cursor = "row-resize";
+        e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", function (e) {
+        if (!isResizing) return;
+
+        var containerHeight = getElmById("main-container").offsetHeight;
+        var newTerminalHeight = containerHeight - e.clientY + getElmById("menubar").offsetHeight;
+
+        // Constraints
+        if (newTerminalHeight < 40) newTerminalHeight = 40;
+        if (newTerminalHeight > containerHeight - 100) newTerminalHeight = containerHeight - 100;
+
+        terminal.style.height = newTerminalHeight + "px";
+        ideCode.style.bottom = newTerminalHeight + "px";
+        splitter.style.bottom = (newTerminalHeight - 3) + "px";
+
+        // Refresh CodeMirror editors if any
+        var selTab = getElmById("tab-code-selected");
+        if (selTab && selTab["tabData"]) {
+            selTab["tabData"]["codeEditor"]["codeMirror"].refresh();
+        }
+    });
+
+    window.addEventListener("mouseup", function () {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = "default";
+        }
+    });
+
+    // Initial positioning
+    var initialHeight = 170;
+    terminal.style.height = initialHeight + "px";
+    ideCode.style.bottom = initialHeight + "px";
+    splitter.style.bottom = (initialHeight - 3) + "px";
+}
+
 window.addEventListener("load", function () {
 
     if (!connectWS())
@@ -2495,7 +2542,7 @@ window.addEventListener("load", function () {
                 var input = getElmById("terminal-input-cmd");
                 var code = input.value.trim();
                 input.value = "";
-                writeTextInTerminal("MicroPython >>> " + code + "\n\n", "terminal-LightSteelBlue");
+                writeTextInTerminal("MicroPython >>> " + code + "\n\n", "terminal-WarmYellow");
                 if (code.length > 0) {
                     input.blur();
                     cmdHistory.push(code);
@@ -2670,6 +2717,7 @@ window.addEventListener("load", function () {
 
     getLatestVersions();
 
+    initTerminalResizer();
     var f = function () {
         setTimeout(function () {
             timerAppSecond();

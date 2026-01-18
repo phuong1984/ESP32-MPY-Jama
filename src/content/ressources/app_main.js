@@ -2615,8 +2615,56 @@ window.addEventListener("load", function () {
 
     getElmById("search-tiny-btn").addEventListener("click", function (e) {
         e.preventDefault();
-        var selTabData = getElmById("tab-code-selected")["tabData"];
-        selTabData["codeEditor"]["codeMirror"].execCommand('find');
+        toggleSearchPanel();
+    });
+
+    getElmById("search-input").addEventListener("input", function (e) {
+        updateSearch();
+    });
+
+    getElmById("search-whole-word").addEventListener("change", function (e) {
+        updateSearch();
+    });
+
+    getElmById("search-case-sensitive").addEventListener("change", function (e) {
+        updateSearch();
+    });
+
+    getElmById("search-prev-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        navigateSearch(-1);
+    });
+
+    getElmById("search-next-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        navigateSearch(1);
+    });
+
+    getElmById("replace-tiny-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        toggleReplacePanel();
+    });
+
+    getElmById("replace-search-input").addEventListener("input", function (e) {
+        updateReplaceSearch();
+    });
+
+    getElmById("replace-whole-word").addEventListener("change", function (e) {
+        updateReplaceSearch();
+    });
+
+    getElmById("replace-case-sensitive").addEventListener("change", function (e) {
+        updateReplaceSearch();
+    });
+
+    getElmById("replace-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        replaceNext();
+    });
+
+    getElmById("replace-all-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        replaceAll();
     });
 
     getElmById("modules-tiny-btn").addEventListener("click", function (e) {
@@ -2728,3 +2776,213 @@ window.addEventListener("load", function () {
     f();
 
 });
+
+var searchMarkers = [];
+var searchCurrentIndex = -1;
+
+function toggleSearchPanel() {
+    var sPanel = getElmById("search-panel");
+    var rPanel = getElmById("replace-panel");
+    var isHidden = sPanel.classList.contains("hide");
+
+    if (isHidden) {
+        rPanel.classList.add("hide");
+        sPanel.classList.remove("hide");
+        getElmById("search-input").focus();
+    } else {
+        sPanel.classList.add("hide");
+        getElmById("search-input").value = "";
+        clearSearch();
+    }
+
+    var selTab = getElmById("tab-code-selected");
+    if (selTab && selTab["tabData"]) {
+        selTab["tabData"]["codeEditor"]["codeMirror"].refresh();
+    }
+}
+
+function toggleReplacePanel() {
+    var sPanel = getElmById("search-panel");
+    var rPanel = getElmById("replace-panel");
+    var isHidden = rPanel.classList.contains("hide");
+
+    if (isHidden) {
+        sPanel.classList.add("hide");
+        rPanel.classList.remove("hide");
+        getElmById("replace-search-input").focus();
+    } else {
+        rPanel.classList.add("hide");
+        getElmById("replace-search-input").value = "";
+        getElmById("replace-input").value = "";
+        clearSearch();
+    }
+
+    var selTab = getElmById("tab-code-selected");
+    if (selTab && selTab["tabData"]) {
+        selTab["tabData"]["codeEditor"]["codeMirror"].refresh();
+    }
+}
+
+function clearSearch() {
+    for (var marker of searchMarkers) marker.clear();
+    searchMarkers = [];
+    searchCurrentIndex = -1;
+    getElmById("search-results-count").innerText = "";
+    getElmById("search-options").classList.add("hide");
+}
+
+function updateSearch() {
+    var query = getElmById("search-input").value;
+    var wholeWord = getElmById("search-whole-word").checked;
+    var caseSensitive = getElmById("search-case-sensitive").checked;
+
+    clearSearch();
+
+    if (query.length === 0) return;
+
+    getElmById("search-options").classList.remove("hide");
+
+    var selTab = getElmById("tab-code-selected");
+    if (!selTab || !selTab["tabData"]) return;
+
+    var cm = selTab["tabData"]["codeEditor"]["codeMirror"];
+    var cursor = cm.getSearchCursor(query, null, { caseFold: !caseSensitive });
+
+    var wordRegex = null;
+    if (wholeWord) {
+        wordRegex = new RegExp("\\b" + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b", caseSensitive ? "" : "i");
+    }
+
+    while (cursor.findNext()) {
+        if (wholeWord) {
+            var match = cursor.to().line === cursor.from().line && cm.getLine(cursor.from().line).substring(cursor.from().ch, cursor.to().ch);
+            if (!wordRegex.test(match)) continue;
+        }
+        searchMarkers.push(cm.markText(cursor.from(), cursor.to(), { className: "cm-searching" }));
+    }
+
+    if (searchMarkers.length > 0) {
+        searchCurrentIndex = 0;
+        updateSearchFeedback(true);
+    } else {
+        getElmById("search-results-count").innerText = "Result: 0/0";
+    }
+}
+
+function updateSearchFeedback(scrollToMatch) {
+    if (searchMarkers.length === 0) return;
+
+    var selTab = getElmById("tab-code-selected");
+    var cm = selTab["tabData"]["codeEditor"]["codeMirror"];
+
+    // Clear active style from all
+    for (var i = 0; i < searchMarkers.length; i++) {
+        var marker = searchMarkers[i];
+        var pos = marker.find();
+        if (pos) {
+            marker.clear();
+            searchMarkers[i] = cm.markText(pos.from, pos.to, { className: i === searchCurrentIndex ? "cm-searching-active" : "cm-searching" });
+        }
+    }
+
+    getElmById("search-results-count").innerText = "Result: " + (searchCurrentIndex + 1) + "/" + searchMarkers.length;
+
+    if (scrollToMatch) {
+        var activeMarker = searchMarkers[searchCurrentIndex];
+        var pos = activeMarker.find();
+        if (pos) {
+            cm.scrollIntoView({ from: pos.from, to: pos.to }, 50);
+        }
+    }
+}
+
+function navigateSearch(dir) {
+    if (searchMarkers.length === 0) return;
+
+    searchCurrentIndex += dir;
+    if (searchCurrentIndex < 0) searchCurrentIndex = searchMarkers.length - 1;
+    if (searchCurrentIndex >= searchMarkers.length) searchCurrentIndex = 0;
+
+    updateSearchFeedback(true);
+}
+
+function updateReplaceSearch() {
+    var query = getElmById("replace-search-input").value;
+    var wholeWord = getElmById("replace-whole-word").checked;
+    var caseSensitive = getElmById("replace-case-sensitive").checked;
+
+    clearSearch();
+
+    if (query.length === 0) return;
+
+    getElmById("replace-options").classList.remove("hide");
+
+    var selTab = getElmById("tab-code-selected");
+    if (!selTab || !selTab["tabData"]) return;
+
+    var cm = selTab["tabData"]["codeEditor"]["codeMirror"];
+    var cursor = cm.getSearchCursor(query, null, { caseFold: !caseSensitive });
+
+    var wordRegex = null;
+    if (wholeWord) {
+        wordRegex = new RegExp("\\b" + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b", caseSensitive ? "" : "i");
+    }
+
+    while (cursor.findNext()) {
+        if (wholeWord) {
+            var match = cursor.to().line === cursor.from().line && cm.getLine(cursor.from().line).substring(cursor.from().ch, cursor.to().ch);
+            if (!wordRegex.test(match)) continue;
+        }
+        searchMarkers.push(cm.markText(cursor.from(), cursor.to(), { className: "cm-searching" }));
+    }
+
+    if (searchMarkers.length > 0) {
+        searchCurrentIndex = 0;
+        updateSearchFeedback(true);
+    }
+}
+
+function replaceNext() {
+    if (searchMarkers.length === 0) return;
+
+    var query = getElmById("replace-search-input").value;
+    var replaceText = getElmById("replace-input").value;
+    var selTab = getElmById("tab-code-selected");
+    var cm = selTab["tabData"]["codeEditor"]["codeMirror"];
+
+    var activeMarker = searchMarkers[searchCurrentIndex];
+    var pos = activeMarker.find();
+    if (pos) {
+        cm.replaceRange(replaceText, pos.from, pos.to);
+        updateReplaceSearch();
+    }
+}
+
+function replaceAll() {
+    var query = getElmById("replace-search-input").value;
+    var replaceText = getElmById("replace-input").value;
+    var wholeWord = getElmById("replace-whole-word").checked;
+    var caseSensitive = getElmById("replace-case-sensitive").checked;
+
+    if (query.length === 0) return;
+
+    var selTab = getElmById("tab-code-selected");
+    var cm = selTab["tabData"]["codeEditor"]["codeMirror"];
+
+    var cursor = cm.getSearchCursor(query, null, { caseFold: !caseSensitive });
+    var wordRegex = null;
+    if (wholeWord) {
+        wordRegex = new RegExp("\\b" + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b", caseSensitive ? "" : "i");
+    }
+
+    cm.operation(function () {
+        while (cursor.findNext()) {
+            if (wholeWord) {
+                var match = cursor.to().line === cursor.from().line && cm.getLine(cursor.from().line).substring(cursor.from().ch, cursor.to().ch);
+                if (!wordRegex.test(match)) continue;
+            }
+            cursor.replace(replaceText);
+        }
+    });
+    updateReplaceSearch();
+}

@@ -15,7 +15,15 @@
 .cm-s-monokai .CodeMirror-line::selection,
 .cm-s-monokai .CodeMirror-line>span::selection,
 .cm-s-monokai .CodeMirror-line>span>span::selection {
-    background: rgba(73, 72, 62, 0.99);
+    background: rgba(15, 178, 242, 0.5);
+    /* Semi-transparent cyan selection */
+}
+
+/* Active match / selection when editor is focused */
+.cm-s-monokai.CodeMirror-focused .CodeMirror-selectedtext {
+    background-color: #0FB2F2 !important;
+    /* Brighter cyan for active match */
+    color: white !important;
 }
 
 .cm-s-monokai .CodeMirror-gutters {
@@ -104,6 +112,15 @@
 .cm-s-monokai .CodeMirror-matchingbracket {
     outline: 1px solid #75715E;
     color: #F8F8F2 !important;
+}
+
+/* Search matches highlight */
+.cm-searching {
+    background-color: rgba(230, 219, 116, 0.3) !important;
+    /* Subtle warm yellow background */
+    border-bottom: 2px solid #E6DB74;
+    /* Warm yellow underline */
+    border-radius: 2px;
 }
 
 /* Match Highlighter Styling */

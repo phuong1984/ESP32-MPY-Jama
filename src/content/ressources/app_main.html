@@ -143,7 +143,34 @@
                     <div class="tiny-btn-separator"></div>
                     <input type="button" id="undo-tiny-btn" class="tiny-btn" title="Undo" />
                     <input type="button" id="redo-tiny-btn" class="tiny-btn" title="Redo" />
+                    <div class="tiny-btn-separator"></div>
                     <input type="button" id="search-tiny-btn" class="tiny-btn" title="Search" />
+                    <div id="search-panel" class="hide">
+                        <input type="text" id="search-input" placeholder="Search..." spellcheck="false" />
+                        <div id="search-options" class="hide">
+                            <label class="search-option-label"><input type="checkbox" id="search-whole-word" /> Whole
+                                word only</label>
+                            <label class="search-option-label"><input type="checkbox" id="search-case-sensitive" /> Case
+                                sensitive</label>
+                            <span id="search-results-count"></span>
+                            <input type="button" id="search-prev-btn" class="tiny-btn-text" value="Previous" />
+                            <input type="button" id="search-next-btn" class="tiny-btn-text" value="Next" />
+                        </div>
+                    </div>
+                    <input type="button" id="replace-tiny-btn" class="tiny-btn" title="Replace" />
+                    <div id="replace-panel" class="hide">
+                        <input type="text" id="replace-search-input" placeholder="Search..." spellcheck="false" />
+                        <input type="text" id="replace-input" placeholder="Replace with..." spellcheck="false" />
+                        <div id="replace-options" class="hide">
+                            <label class="search-option-label"><input type="checkbox" id="replace-whole-word" /> Whole
+                                word only</label>
+                            <label class="search-option-label"><input type="checkbox" id="replace-case-sensitive" />
+                                Case sensitive</label>
+                            <input type="button" id="replace-btn" class="tiny-btn-text" value="Replace" />
+                            <input type="button" id="replace-all-btn" class="tiny-btn-text" value="Replace All" />
+                        </div>
+                    </div>
+                    <div class="tiny-btn-separator"></div>
                     <input type="button" id="gpio-tiny-btn" class="tiny-btn tiny-btn-right" title="GPIO pinout memo" />
                     <div class="tiny-btn-separator-right"></div>
                     <input type="button" id="modules-tiny-btn" class="tiny-btn tiny-btn-right" title="Import modules" />
@@ -155,7 +182,7 @@
                         title="Scroll left">◀</div>
                     <div id="tabs-code-container-scroll-btn-right" class="tabs-code-container-scroll-btn"
                         title="Scroll right">▶</div>
-                    <div id="tabs-code-container-scroll" class="tabs-code-container-scroll-hide-btns">
+                    <div id="tabs-code-container-scroll" class="tabs-code-container-scroll-tabs">
                         <div id="tabs-code-container"></div>
                         <div id="tab-code-model" class="tab-code hide">
                             <div class="tab-code-text"></div>

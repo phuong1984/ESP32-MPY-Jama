@@ -1550,7 +1550,7 @@ class Application :
                                       if r[2] else None,
                              uptime = round(r[3] / 1000 / 60) )
                 self._wsSendCmd('AUTO-INFO', info)
-            except :
+            except Exception as e :
                 pass
 
     # ------------------------------------------------------------------------
